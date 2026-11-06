@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -19,6 +20,38 @@ class UserCreate(BaseModel):
     @classmethod
     def validate_password_bytes(cls, value: str) -> str:
         return _validate_bcrypt_password_bytes(value)
+
+
+class EmailOnly(BaseModel):
+    email: EmailStr
+
+
+class CodeResend(BaseModel):
+    email: EmailStr
+    purpose: Literal["verify", "reset"] = "verify"
+
+
+class EmailVerification(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\s*\d{6}\s*$")
+
+
+class PasswordReset(EmailVerification):
+    new_password: str = Field(min_length=12, max_length=72)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_bytes(cls, value: str) -> str:
+        return _validate_bcrypt_password_bytes(value)
+
+
+class Registered(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    email: str
+    created_at: datetime
+    verification_required: bool
 
 
 class UserLogin(BaseModel):

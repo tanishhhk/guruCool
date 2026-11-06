@@ -6,6 +6,7 @@ from app.models import (  # noqa: F401
     chat_message,
     document,
     document_chunk,
+    email_code,
     revoked_token,
     upload_idempotency,
     usage,

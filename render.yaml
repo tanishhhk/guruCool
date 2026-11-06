@@ -23,6 +23,14 @@ services:
         sync: false
       - key: LLM_PROVIDERS
         value: groq,openrouter
+      # Email codes: set EMAIL_PROVIDER to brevo once BREVO_API_KEY and a
+      # verified EMAIL_FROM_ADDRESS are in place. none keeps verification off.
+      - key: EMAIL_PROVIDER
+        value: none
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        sync: false
       - key: CORS_ORIGINS
         value: '["https://tanishhhk.github.io"]'
       - key: ACCESS_TOKEN_EXPIRE_MINUTES

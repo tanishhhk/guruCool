@@ -214,6 +214,17 @@ Send the same email and password fields. A successful response contains `access_
 
 Requires the bearer token. The current access token is added to the revocation table.
 
+**Email verification and password resets.** With `EMAIL_PROVIDER=brevo` (or `console` locally), sign-up emails a 6-digit code and the response says `verification_required: true`. Signing in before verifying returns 403 and sends a fresh code. Codes last 15 minutes, allow 5 wrong tries, and a new one is sent at most once a minute.
+
+- `POST /auth/verify-email` with `email` and `code` returns a token.
+- `POST /auth/resend-code` with `email` and `purpose` (`verify` or `reset`) and `POST /auth/forgot-password` with `email` always return 202, so they never reveal who has an account.
+- `POST /auth/reset-password` with `email`, `code` and `new_password` returns a token and signs out every other device.
+- `GET /auth/providers` says which sign-in features are on.
+
+To send real emails: create a free [Brevo](https://www.brevo.com) account (300 emails a day), verify a sender address, create an API key, and set `EMAIL_PROVIDER=brevo`, `BREVO_API_KEY` and `EMAIL_FROM_ADDRESS`. Brevo is used over HTTPS because Render's free plan blocks outgoing SMTP. With `EMAIL_PROVIDER=none` new accounts count as verified.
+
+**Your account** (`/account`, bearer token): `GET` it, `PATCH` a `display_name`, `POST /account/password` with `current_password` and `new_password`, `POST /account/sign-out-everywhere`, and `POST /account/delete` with `confirm: "DELETE"` and `password`, which deletes every document, chat and video.
+
 ### Documents
 
 **`POST /documents/upload`**

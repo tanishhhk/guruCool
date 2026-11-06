@@ -94,6 +94,13 @@ class Settings(BaseSettings):
     # How much document text one story is written from.
     story_source_chars: int = Field(default=12_000, ge=1_000, le=200_000)
 
+    # Email codes for verification and password resets. "none" turns verification
+    # off (new accounts count as verified); "console" only logs codes, for local use.
+    email_provider: Literal["none", "console", "brevo"] = "none"
+    brevo_api_key: str = ""
+    email_from_address: str = Field(default="", max_length=200)
+    email_from_name: str = Field(default="guruKool", max_length=100)
+
     auth_requests_per_minute: int = Field(default=30, ge=1, le=100_000)
     upload_requests_per_minute: int = Field(default=8, ge=1, le=100_000)
     chat_requests_per_minute: int = Field(default=20, ge=1, le=100_000)
@@ -123,6 +130,10 @@ class Settings(BaseSettings):
     @property
     def llm_provider_order(self) -> list[str]:
         return [name for name in self.llm_providers.split(",") if name]
+
+    @property
+    def email_verification_enabled(self) -> bool:
+        return self.email_provider != "none"
 
     @property
     def openrouter_models(self) -> list[str]:

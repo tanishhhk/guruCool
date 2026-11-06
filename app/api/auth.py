@@ -11,8 +11,20 @@ from app.database import get_db
 from app.models.revoked_token import RevokedToken
 from app.models.user import User
 from app.models.document import Document
-from app.schemas.user import ProfileUpdate, Token, UsageResponse, UserCreate, UserLogin, UserResponse
-from app.services import lenses, usage
+from app.schemas.user import (
+    CodeResend,
+    EmailOnly,
+    EmailVerification,
+    PasswordReset,
+    ProfileUpdate,
+    Registered,
+    Token,
+    UsageResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+)
+from app.services import email_codes, lenses, mailer, usage
 from app.services.auth import (
     decode_access_token,
     get_password_hash,
@@ -24,7 +36,34 @@ from app.services.auth import (
 router = APIRouter(tags=["Authentication"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def _find_by_email(db: Session, email) -> User | None:
+    return db.query(User).filter(User.email == str(email).strip().lower()).first()
+
+
+def _send(db: Session, user: User, purpose: str) -> None:
+    code = email_codes.issue_code(db, user, purpose)
+    if code is not None:
+        mailer.send_code(user.email, code, purpose)
+
+
+_BAD_CODE = HTTPException(
+    status_code=status.HTTP_400_BAD_REQUEST,
+    detail="That code is not right, or it has expired. Ask for a new one.",
+)
+
+
+@router.get("/providers")
+def providers():
+    """Which sign-in features are switched on, so the web app shows only those."""
+    return {
+        "email_verification": settings.email_verification_enabled,
+        "google": False,
+        "phone": False,
+        "firebase": None,
+    }
+
+
+@router.post("/register", response_model=Registered, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     email = str(user_data.email).strip().lower()
     if db.query(User).filter(User.email == email).first():
@@ -33,7 +72,8 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered.",
         )
 
-    user = User(email=email, hashed_password=get_password_hash(user_data.password))
+    verify = settings.email_verification_enabled
+    user = User(email=email, hashed_password=get_password_hash(user_data.password), email_verified=not verify)
     try:
         db.add(user)
         db.commit()
@@ -44,7 +84,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT,
             detail="Email already registered.",
         ) from None
-    return user
+    if verify:
+        _send(db, user, "verify")
+    return {"id": user.id, "email": user.email, "created_at": user.created_at, "verification_required": verify}
 
 
 @router.post("/login", response_model=Token)
@@ -63,6 +105,55 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    if settings.email_verification_enabled and not user.email_verified:
+        _send(db, user, "verify")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Check your email for a 6-digit code to finish signing in.",
+        )
+    return {"access_token": issue_token(user), "token_type": "bearer"}
+
+
+@router.post("/verify-email", response_model=Token)
+def verify_email(body: EmailVerification, db: Session = Depends(get_db)):
+    """Confirm an email address with the emailed code, and sign in."""
+    user = _find_by_email(db, body.email)
+    if user is None or not email_codes.check_code(db, user, "verify", body.code):
+        raise _BAD_CODE
+    user.email_verified = True
+    db.commit()
+    db.refresh(user)
+    return {"access_token": issue_token(user), "token_type": "bearer"}
+
+
+@router.post("/resend-code", status_code=status.HTTP_202_ACCEPTED)
+def resend_code(body: CodeResend, db: Session = Depends(get_db)):
+    """Send a fresh code. Always 202, so the answer never reveals who has an account."""
+    user = _find_by_email(db, body.email)
+    if user is not None and (body.purpose == "reset" or not user.email_verified):
+        _send(db, user, body.purpose)
+    return {"detail": "If that address has an account, a code is on its way."}
+
+
+@router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+def forgot_password(body: EmailOnly, db: Session = Depends(get_db)):
+    user = _find_by_email(db, body.email)
+    if user is not None and settings.email_verification_enabled:
+        _send(db, user, "reset")
+    return {"detail": "If that address has an account, a code is on its way."}
+
+
+@router.post("/reset-password", response_model=Token)
+def reset_password(body: PasswordReset, db: Session = Depends(get_db)):
+    """Choose a new password with the emailed code. Signs out every other device."""
+    user = _find_by_email(db, body.email)
+    if user is None or not email_codes.check_code(db, user, "reset", body.code):
+        raise _BAD_CODE
+    user.hashed_password = get_password_hash(body.new_password)
+    user.email_verified = True
+    user.token_version = (user.token_version or 0) + 1
+    db.commit()
+    db.refresh(user)
     return {"access_token": issue_token(user), "token_type": "bearer"}
 
 
