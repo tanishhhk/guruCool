@@ -21,6 +21,8 @@ class User(Base):
     email_verified = Column(Boolean, nullable=False, default=False, server_default=true())
     # Bumped to sign out every device: tokens carry the version they were issued under.
     token_version = Column(Integer, nullable=False, default=0, server_default="0")
+    # free, plus or pro; see app.services.plans. Set by hand until payments exist.
+    plan = Column(String(20), nullable=False, default="free", server_default="free")
 
     def __repr__(self):
         return f"<User {self.id}>"

@@ -24,6 +24,7 @@ STRICTNESS = {
 DEPTH = {
     "overview": {"words": 250, "scenes": (3, 5)},
     "detailed": {"words": 600, "scenes": (6, 9)},
+    "deep": {"words": 1100, "scenes": (9, 12)},
 }
 
 _SYSTEM_TEMPLATE = """You are a witty, warm storyteller who explains documents.

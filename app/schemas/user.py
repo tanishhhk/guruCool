@@ -82,11 +82,14 @@ class ProfileUpdate(BaseModel):
 
 
 class UsageResponse(BaseModel):
+    plan: dict[str, str]
     limits: dict[str, int]
     used: dict[str, int]
     resets_in_seconds: int
     max_documents: int
     documents: int
+    story_costs: dict[str, int]
+    story_depths: list[str]
 
 
 class Token(BaseModel):

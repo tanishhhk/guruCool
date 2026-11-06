@@ -28,6 +28,7 @@ PUBLIC_ROUTES = {
     ("POST", "/auth/resend-code"),
     ("POST", "/auth/forgot-password"),
     ("POST", "/auth/reset-password"),
+    ("GET", "/plans"),
 }
 
 

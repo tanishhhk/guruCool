@@ -10,8 +10,8 @@ class VideoRequest(BaseModel):
 
     # strict: only the document's facts. exam: may explain in its own words.
     strictness: Literal["strict", "exam"] = "strict"
-    # overview: about 250 words. detailed: about 600 words.
-    depth: Literal["overview", "detailed"] = "overview"
+    # overview: about 250 words. detailed: about 600. deep: about 1,100 (Plus and Pro).
+    depth: Literal["overview", "detailed", "deep"] = "overview"
 
 
 class StoryScene(BaseModel):

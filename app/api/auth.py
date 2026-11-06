@@ -24,7 +24,7 @@ from app.schemas.user import (
     UserLogin,
     UserResponse,
 )
-from app.services import email_codes, lenses, mailer, usage
+from app.services import email_codes, lenses, mailer, plans, usage
 from app.services.auth import (
     decode_access_token,
     get_password_hash,
@@ -183,12 +183,16 @@ def update_profile(
 
 @router.get("/me/usage", response_model=UsageResponse)
 def my_usage(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Today's uploads, questions and stories, against the daily limits."""
+    """Today's uploads, questions and video credits, against the plan's daily limits."""
+    plan = plans.plan_for(current_user)
     return {
-        "limits": usage.limits(),
+        "plan": {"id": plan.id, "label": plan.label},
+        "limits": dict(plan.daily),
         "used": usage.used_today(db, current_user.id),
         "resets_in_seconds": usage.seconds_until_reset(),
-        "max_documents": settings.max_documents_per_user,
+        "max_documents": plan.max_documents,
+        "story_costs": plans.STORY_COST,
+        "story_depths": list(plan.story_depths),
         "documents": db.query(Document).filter(Document.user_id == current_user.id).count(),
     }
 

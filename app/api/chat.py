@@ -135,7 +135,7 @@ def ask_question(
             "Retry processing or upload it again.",
         )
 
-    usage.consume(db, current_user.id, "question")
+    usage.consume(db, current_user, "question")
     db.commit()
     result = retrieve(db, document.id, generate_single_embedding(question), request.top_k, question)
     if not result.chunks:

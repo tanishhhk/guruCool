@@ -34,7 +34,7 @@ def account_view(user: User) -> dict:
         "sign_in_methods": methods,
         "profession": user.profession,
         "focus": user.focus,
-        "plan": getattr(user, "plan", None) or "free",
+        "plan": user.plan or "free",
         "created_at": user.created_at,
         "story_preferences": {},
     }
