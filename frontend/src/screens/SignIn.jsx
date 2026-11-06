@@ -1,10 +1,25 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { AlertCircle, Check, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Check, Eye, EyeOff, Smartphone } from "lucide-react";
 
 import { api, session } from "../api";
 import { ResetStep, VerifyStep } from "../components/AccountSteps";
 import Guru from "../components/Guru";
 import { Logo } from "../components/Logo";
+import PhoneSignIn from "../components/PhoneSignIn";
+import { googleIdToken } from "../lib/firebase";
+import { friendlyAuthError } from "../lib/firebaseErrors";
+
+// Google's "G", drawn from its four brand colours, as their sign-in guidelines ask.
+function GoogleMark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  );
+}
 
 const MIN_PASSWORD = 12;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,6 +40,7 @@ const useNarrow = () =>
 function line({ stage, creating, focus, email, password, show, busy, troubled, failure }) {
   if (stage === "verify") return "A code is flying to your inbox. Six digits, then you are in.";
   if (stage === "reset") return "Forgotten secrets happen to the wisest. Let us make a new one.";
+  if (stage === "phone") return "A phone works too. I will wait for the code.";
   if (busy) return creating ? "Writing your name in my book." : "Opening your library.";
   if (failure) return "Hmm. That did not open the door. Try again?";
   if (troubled) return "Hmm. Read the note under the field and try again.";
@@ -75,7 +91,8 @@ export default function SignIn({ onSignedIn }) {
   const [errors, setErrors] = useState({});
   const [failure, setFailure] = useState("");
   const [busy, setBusy] = useState(false);
-  const [stage, setStage] = useState("form"); // form, verify or reset
+  const [stage, setStage] = useState("form"); // form, verify, reset or phone
+  const [providers, setProviders] = useState(null);
   const close = useNarrow();
   const creating = mode === "create";
   const troubled = Boolean(failure || errors.email || errors.password);
@@ -119,6 +136,27 @@ export default function SignIn({ onSignedIn }) {
   const signIn = (token) => {
     session.save(token);
     onSignedIn();
+  };
+
+  useEffect(() => {
+    api("/auth/providers").then(setProviders).catch(() => {});
+  }, []);
+
+  // A Firebase ID token (from Google or a phone) becomes a guruKool sign-in.
+  const withFirebase = async (idToken) => {
+    const { access_token: token } = await api("/auth/firebase", { method: "POST", body: { id_token: idToken } });
+    signIn(token);
+  };
+
+  const google = async () => {
+    setFailure("");
+    setBusy(true);
+    try {
+      await withFirebase(await googleIdToken(providers.firebase));
+    } catch (error) {
+      setFailure(friendlyAuthError(error) ?? "");
+      setBusy(false);
+    }
   };
 
   const backToForm = () => {
@@ -171,6 +209,7 @@ export default function SignIn({ onSignedIn }) {
         <div className="gc-panel-inner">
           {stage === "verify" && <VerifyStep email={email.trim()} onToken={signIn} onBack={backToForm} />}
           {stage === "reset" && <ResetStep initialEmail={email.trim()} onToken={signIn} onBack={backToForm} />}
+          {stage === "phone" && <PhoneSignIn firebase={providers.firebase} onIdToken={withFirebase} onBack={backToForm} />}
           {stage === "form" && (
             <>
               <h1 className="gc-title">{creating ? "Create your account" : "Welcome back"}</h1>
@@ -187,7 +226,23 @@ export default function SignIn({ onSignedIn }) {
                 ))}
               </div>
   
-              <form className="gc-form" onSubmit={submit} noValidate>
+              {(providers?.google || providers?.phone) && (
+              <div className="gc-alt">
+                {providers.google && (
+                  <button type="button" className="gc-alt-button" onClick={google} disabled={busy}>
+                    <GoogleMark /> Continue with Google
+                  </button>
+                )}
+                {providers.phone && (
+                  <button type="button" className="gc-alt-button" onClick={() => { setFailure(""); setStage("phone"); }} disabled={busy}>
+                    <Smartphone size={18} strokeWidth={1.75} aria-hidden="true" /> Use my phone number
+                  </button>
+                )}
+                <p className="gc-or"><span>or with email</span></p>
+              </div>
+            )}
+
+            <form className="gc-form" onSubmit={submit} noValidate>
                 <div className="gc-field">
                   <label htmlFor="email">Email</label>
                   <div className="gc-input-wrap">

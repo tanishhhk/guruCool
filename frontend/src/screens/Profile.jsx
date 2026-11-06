@@ -5,6 +5,54 @@ import { api, session } from "../api";
 import { FOCUS, PROFESSIONS, professionOf } from "../lenses";
 import { displayName, initialOf } from "../lib/people";
 import { LENGTHS, VOICES } from "../lib/voices";
+import PhoneSignIn from "../components/PhoneSignIn";
+import { googleIdToken } from "../lib/firebase";
+import { friendlyAuthError } from "../lib/firebaseErrors";
+
+function Connect({ account, onConnected }) {
+  const [providers, setProviders] = useState(null);
+  const [phone, setPhone] = useState(false);
+  const [state, setState] = useState("");
+
+  useEffect(() => {
+    api("/auth/providers").then(setProviders).catch(() => {});
+  }, []);
+
+  const connect = async (idToken) => {
+    const updated = await api("/account/connect", { method: "POST", body: { id_token: idToken } });
+    onConnected(updated);
+    setPhone(false);
+    setState("saved");
+  };
+  const google = async () => {
+    setState("");
+    try {
+      await connect(await googleIdToken(providers.firebase));
+    } catch (error) {
+      setState(friendlyAuthError(error) ?? "");
+    }
+  };
+
+  const canGoogle = providers?.google && !account.sign_in_methods.includes("google");
+  const canPhone = providers?.phone && !account.sign_in_methods.includes("phone");
+  if (!canGoogle && !canPhone) return null;
+  return (
+    <div className="profile-connect">
+      <h3>Add another way to sign in</h3>
+      {phone ? (
+        <div className="profile-phone">
+          <PhoneSignIn firebase={providers.firebase} onIdToken={connect} onBack={() => setPhone(false)} title="Add your phone number" />
+        </div>
+      ) : (
+        <div className="settings-actions">
+          {canGoogle && <button type="button" className="button button-quiet" onClick={google}>Connect Google</button>}
+          {canPhone && <button type="button" className="button button-quiet" onClick={() => setPhone(true)}>Add a phone number</button>}
+        </div>
+      )}
+      <Saved state={state} />
+    </div>
+  );
+}
 
 function Saved({ state }) {
   if (!state) return null;
@@ -63,7 +111,7 @@ function Details({ account, onUser }) {
   );
 }
 
-function Security({ account }) {
+function Security({ account, onConnected }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [state, setState] = useState("");
@@ -103,6 +151,7 @@ function Security({ account }) {
     <section className="profile-section" aria-labelledby="security-heading">
       <h2 id="security-heading">Sign-in and security</h2>
       <p className="profile-note">You sign in with: {account.sign_in_methods.map((method) => ({ password: "email and password", google: "Google", phone: "phone number" })[method]).join(", ") || "a linked account"}.</p>
+      <Connect account={account} onConnected={onConnected} />
       <form className="settings-form" onSubmit={change}>
         {account.has_password && (
           <div className="field">
@@ -320,7 +369,7 @@ export default function Profile({ user, usage, onUser, onSignOut }) {
             </section>
           )}
           <VideoDefaults account={account} usage={usage} onUser={updated} />
-          <Security account={account} />
+          <Security account={account} onConnected={(next) => setAccount(next)} />
           <Reading user={user} onUser={onUser} />
           <DangerZone account={account} onSignOut={onSignOut} />
         </>
