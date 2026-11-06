@@ -1,128 +1,100 @@
 import { useCallback, useEffect, useState } from "react";
-import { BookOpen, Library as LibraryIcon, MessageSquareText, Settings as SettingsIcon } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 import { api } from "../api";
 import { Logo } from "../components/Logo";
-import UploadBox from "../components/UploadBox";
-import { focusPhrase } from "../lenses";
-import AskPanel from "./AskPanel";
-import Library from "./Library";
+import Shelf from "../components/Shelf";
+import DocumentView from "./DocumentView";
+import Home from "./Home";
 import Settings from "./Settings";
-import StoryPanel from "./StoryPanel";
 
-function UsageLine({ usage }) {
-  if (!usage) return null;
-  const left = (kind) => Math.max(0, usage.limits[kind] - usage.used[kind]);
-  return (
-    <p className="usage" title="Daily limits reset at midnight UTC">
-      <span>{left("question")} questions</span>
-      <span>{left("story")} stories</span>
-      <span>{left("upload")} uploads left today</span>
-    </p>
-  );
-}
-
+// The signed-in app: the shelf of documents on the left, the open page on the right.
 export default function Workspace({ user, initialDocument, onUser, onSignOut }) {
-  const [document, setDocument] = useState(initialDocument);
-  const [view, setView] = useState(initialDocument ? "ask" : "library");
+  const [items, setItems] = useState(null);
+  const [currentId, setCurrentId] = useState(initialDocument?.id ?? null);
+  const [opened, setOpened] = useState(initialDocument);
+  const [view, setView] = useState(initialDocument ? "document" : "home");
   const [usage, setUsage] = useState(null);
+  const [drawer, setDrawer] = useState(false);
 
   const refreshUsage = useCallback(() => {
     api("/auth/me/usage").then(setUsage).catch(() => {});
   }, []);
+  const refreshShelf = useCallback(() => {
+    api("/activity")
+      .then((page) => setItems(page.documents))
+      .catch(() => setItems((previous) => previous ?? []));
+  }, []);
+
   useEffect(() => {
     refreshUsage();
-  }, [refreshUsage]);
+    refreshShelf();
+  }, [refreshUsage, refreshShelf]);
 
-  // Open the most recent ready document when none was passed in.
-  useEffect(() => {
-    if (document) return;
-    api("/documents?limit=1&sort=newest&status=completed")
-      .then((page) => {
-        if (page.items[0]) {
-          setDocument(page.items[0]);
-          setView("ask");
-        }
-      })
-      .catch(() => {});
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const onUsed = useCallback(() => {
+    refreshUsage();
+    refreshShelf();
+  }, [refreshUsage, refreshShelf]);
 
-  const open = (next) => {
-    setDocument(next);
-    setView("ask");
+  const open = (document) => {
+    setOpened(document);
+    setCurrentId(document.id);
+    setView("document");
+    setDrawer(false);
+  };
+  const goHome = () => {
+    setCurrentId(null);
+    setView("home");
+    setDrawer(false);
+  };
+  const removed = (id) => {
+    setItems((previous) => previous?.filter((item) => item.id !== id) ?? previous);
+    refreshUsage();
+    if (id === currentId) goHome();
   };
 
-  const tabs = [
-    ["ask", "Ask", MessageSquareText],
-    ["story", "Story", BookOpen],
-  ];
+  // The shelf entry has the latest counts; a just-uploaded document may not be on it yet.
+  const current = items?.find((item) => item.id === currentId) ?? (opened?.id === currentId ? opened : null);
 
   return (
-    <div className="workspace">
-      <header className="topbar">
-        <Logo size={28} className="topbar-logo" />
-        <nav className="topbar-nav" aria-label="Main">
-          <button type="button" className={view === "library" ? "is-current" : ""} onClick={() => setView("library")}>
-            <LibraryIcon size={18} strokeWidth={1.75} aria-hidden="true" />
-            <span>Library</span>
-          </button>
-          <button type="button" className={view === "settings" ? "is-current" : ""} onClick={() => setView("settings")}>
-            <SettingsIcon size={18} strokeWidth={1.75} aria-hidden="true" />
-            <span>Settings</span>
-          </button>
-        </nav>
-        <UsageLine usage={usage} />
+    <div className={`workspace${drawer ? " has-drawer" : ""}`}>
+      <header className="mobile-bar">
+        <button type="button" className="icon-button on-ink" aria-label="Open your documents" onClick={() => setDrawer(true)}>
+          <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
+        </button>
+        <button type="button" className="mobile-home" onClick={goHome} aria-label="guruKool home">
+          <Logo size={26} />
+        </button>
       </header>
 
-      <main className="desk">
-        {view === "library" && (
-          <Library
-            current={document}
-            usage={usage}
-            onUsed={refreshUsage}
-            onOpen={open}
-            onDeletedCurrent={() => setDocument(null)}
-          />
-        )}
+      <div className="shelf-wrap">
+        <button type="button" className="icon-button on-ink shelf-close" aria-label="Close" onClick={() => setDrawer(false)}>
+          <X size={20} strokeWidth={1.75} aria-hidden="true" />
+        </button>
+        <Shelf
+          user={user}
+          items={items}
+          currentId={view === "document" ? currentId : null}
+          usage={usage}
+          onHome={goHome}
+          onOpen={open}
+          onProfile={() => {
+            setView("settings");
+            setDrawer(false);
+          }}
+          onSignOut={onSignOut}
+        />
+      </div>
+      {drawer && <button type="button" className="shelf-scrim" aria-label="Close your documents" onClick={() => setDrawer(false)} />}
 
+      <main className="page-area">
+        {view === "home" && <Home user={user} items={items} usage={usage} onReady={(document) => { onUsed(); open(document); }} onOpen={open} />}
         {view === "settings" && <Settings user={user} onSaved={onUser} onSignOut={onSignOut} />}
-
-        {(view === "ask" || view === "story") &&
-          (document ? (
-            <div className="page">
-              <header className="page-head">
-                <div>
-                  <h1 className="page-title">{document.filename.replace(/\.pdf$/i, "")}</h1>
-                  <p className="page-meta">
-                    <span>{document.page_count} pages</span>
-                    {user.focus && <span>Read for {focusPhrase(user.focus)}</span>}
-                  </p>
-                </div>
-                <div className="tabs" role="tablist" aria-label="What to do with this document">
-                  {tabs.map((tab) => {
-                    const [id, label, TabIcon] = tab;
-                    return (
-                      <button key={id} type="button" role="tab" aria-selected={view === id} className={view === id ? "is-active" : ""} onClick={() => setView(id)}>
-                        <TabIcon size={18} strokeWidth={1.75} aria-hidden="true" />
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </header>
-              {view === "ask" ? (
-                <AskPanel document={document} focus={user.focus} onUsed={refreshUsage} />
-              ) : (
-                <StoryPanel document={document} focus={user.focus} onUsed={refreshUsage} />
-              )}
-            </div>
-          ) : (
-            <div className="page page-empty">
-              <h1>Bring a document to start.</h1>
-              <UploadBox offerSample onReady={(next) => { refreshUsage(); open(next); }} />
-            </div>
-          ))}
+        {view === "document" && current && (
+          <DocumentView key={current.id} document={current} user={user} usage={usage} onUsed={onUsed} onDeleted={removed} />
+        )}
       </main>
+
     </div>
   );
 }

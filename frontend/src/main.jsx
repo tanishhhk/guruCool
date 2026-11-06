@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import "./styles/base.css";
 import "./styles/signin.css";
 import "./styles/app.css";
+import "./styles/workspace.css";
 import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(
