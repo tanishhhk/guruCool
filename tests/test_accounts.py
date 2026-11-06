@@ -149,3 +149,16 @@ def test_delete_account_removes_files_and_rows(db_session_factory, client, tmp_p
         assert db.query(VideoJob).count() == 0
         assert db.query(ChatMessage).count() == 0
     assert client.get("/auth/me", headers=headers).status_code == 401
+
+
+def test_browsers_may_send_patch_for_renaming(db_session_factory, client):
+    preflight = client.options(
+        "/account",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "PATCH",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        },
+    )
+    assert preflight.status_code == 200
+    assert "PATCH" in preflight.headers["access-control-allow-methods"]
