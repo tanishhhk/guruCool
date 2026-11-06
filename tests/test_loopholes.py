@@ -16,7 +16,19 @@ from app.services.auth import create_access_token, get_password_hash
 from tests.fakes import vector
 
 PDF = b"%PDF-1.7\nsample"
-PUBLIC_ROUTES = {("GET", "/"), ("GET", "/health"), ("GET", "/ready"), ("POST", "/auth/register"), ("POST", "/auth/login")}
+PUBLIC_ROUTES = {
+    ("GET", "/"),
+    ("GET", "/health"),
+    ("GET", "/ready"),
+    ("POST", "/auth/register"),
+    ("POST", "/auth/login"),
+    # Signing up and getting back in: these work before anyone has a token.
+    ("GET", "/auth/providers"),
+    ("POST", "/auth/verify-email"),
+    ("POST", "/auth/resend-code"),
+    ("POST", "/auth/forgot-password"),
+    ("POST", "/auth/reset-password"),
+}
 
 
 def _routes():
