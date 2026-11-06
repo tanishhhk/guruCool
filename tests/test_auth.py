@@ -57,7 +57,7 @@ def test_register_and_login_returns_signed_token():
         assert login.json()["token_type"] == "bearer"
 
         payload = decode_access_token(login.json()["access_token"])
-        assert payload["sub"] == "new@example.com"
+        assert payload["sub"] == payload["user_id"] == registration.json()["id"]
         assert isinstance(payload["user_id"], str)
 
 

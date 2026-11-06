@@ -1,4 +1,3 @@
-from datetime import timedelta
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -15,9 +14,9 @@ from app.models.document import Document
 from app.schemas.user import ProfileUpdate, Token, UsageResponse, UserCreate, UserLogin, UserResponse
 from app.services import lenses, usage
 from app.services.auth import (
-    create_access_token,
     decode_access_token,
     get_password_hash,
+    issue_token,
     verify_password,
     verify_password_for_missing_user,
 )
@@ -64,11 +63,7 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    access_token = create_access_token(
-        data={"sub": user.email, "user_id": user.id},
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": issue_token(user), "token_type": "bearer"}
 
 
 @router.get("/me", response_model=UserResponse)
