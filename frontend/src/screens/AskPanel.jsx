@@ -2,51 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUp } from "lucide-react";
 
 import { api } from "../api";
+import AnswerText from "../components/AnswerText";
+import { pagesOf } from "../lib/pages";
 import { DEFAULT_QUESTIONS, FOCUS } from "../lenses";
-
-function pagesOf(source) {
-  if (!source.page_start) return "";
-  return source.page_start === source.page_end ? `p. ${source.page_start}` : `pp. ${source.page_start} to ${source.page_end}`;
-}
-
-// Inline text: **bold** and [S1] markers, which become the page they point to.
-function inline(text, pages, key) {
-  return text.split(/(\*\*[^*]+\*\*|\[S\d+\])/g).map((part, index) => {
-    const cite = part.match(/^\[(S\d+)\]$/);
-    if (cite) return pages[cite[1]] ? <sup key={`${key}-${index}`} className="folio cite">{pages[cite[1]]}</sup> : " ";
-    if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={`${key}-${index}`}>{part.slice(2, -2)}</strong>;
-    return part.replace(/(^|\s)[*_]+|[*_]+(\s|$)/g, "$1$2");
-  });
-}
-
-// Models answer in light markdown: paragraphs, bold and lists.
-function AnswerText({ text, sources }) {
-  const pages = Object.fromEntries(sources.map((source) => [source.source_id, pagesOf(source)]));
-  const blocks = [];
-  for (const raw of text.split("\n")) {
-    const line = raw.trim().replace(/^#+\s*/, "");
-    const item = line.match(/^(?:[-*•]|\d+[.)])\s+(.*)$/);
-    if (!line) blocks.push(null);
-    else if (item) {
-      const last = blocks[blocks.length - 1];
-      if (Array.isArray(last)) last.push(item[1]);
-      else blocks.push([item[1]]);
-    } else blocks.push(line);
-  }
-  return (
-    <div className="answer-text">
-      {blocks.filter(Boolean).map((block, index) =>
-        Array.isArray(block) ? (
-          <ul key={index}>
-            {block.map((entry, i) => <li key={i}>{inline(entry, pages, `${index}-${i}`)}</li>)}
-          </ul>
-        ) : (
-          <p key={index}>{inline(block, pages, index)}</p>
-        ),
-      )}
-    </div>
-  );
-}
 
 const WORD = /[a-z0-9]{4,}/g;
 const HEADING = /^(section|chapter|part|article|clause)\s+[\d.]+\.?$/i;

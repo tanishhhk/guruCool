@@ -401,20 +401,79 @@
   max-width: 66ch;
 }
 
-.answer-text ul {
+.answer-text ul,
+.answer-text ol {
   display: grid;
   gap: var(--space-2);
-  padding-left: 1.2em;
+  padding-left: 1.3em;
 }
 
 .answer-text li::marker {
   color: var(--marigold-text);
+  font-weight: 700;
 }
 
-.cite {
-  font-size: 0.75em;
-  margin-left: 2px;
+.answer-text h3 {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  margin-top: var(--space-2);
+}
+
+.answer-text strong {
+  background: linear-gradient(transparent 58%, var(--highlight-soft) 58%);
+  font-weight: 700;
+}
+
+.answer-text code {
+  font-size: 0.88em;
+  padding: 1px 6px;
+  border-radius: var(--radius-s);
+  background: var(--page-shade);
+}
+
+.answer-table {
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+}
+
+.answer-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step-0);
+  line-height: 1.5;
+}
+
+.answer-table th,
+.answer-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--rule);
+}
+
+.answer-table th {
+  background: var(--page-shade);
+  font-weight: 700;
+}
+
+.answer-table tr:last-child td {
+  border-bottom: 0;
+}
+
+/* A page reference after the sentence it supports, never glued to the last word. */
+.cite-chip {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(255, 201, 77, 0.22);
   color: var(--marigold-text);
+  font-size: 0.78em;
+  line-height: 1.6;
+  white-space: nowrap;
+  vertical-align: 0.1em;
 }
 
 .excerpts {
