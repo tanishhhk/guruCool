@@ -16,9 +16,25 @@
   animation: breathe 1.8s ease-in-out infinite;
 }
 
+/* The highlighter stroke draws across the page, again and again, while the app loads. */
+.boot-mark path:nth-of-type(3) {
+  animation: draw 1.8s var(--ease-out) infinite;
+}
+
 @keyframes breathe {
   50% {
     transform: translateY(-4px) rotate(-3deg);
+  }
+}
+
+@keyframes draw {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  60%,
+  to {
+    clip-path: inset(0 0 0 0);
   }
 }
 
@@ -173,12 +189,94 @@
   font-size: var(--step--1);
 }
 
-.upload-status {
+.upload-progress {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-m);
+}
+
+.upload-file {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  text-align: left;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.upload-file strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-percent {
+  margin-left: auto;
+  font-size: 1.05rem;
+}
+
+.upload-track {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--page-shade);
+  overflow: hidden;
+}
+
+.upload-track span {
+  display: block;
+  height: 100%;
+  background: var(--highlight);
+  transform-origin: left;
+  transition: transform 300ms linear;
+  clip-path: polygon(0 15%, 100% 0, 100% 85%, 0 100%);
+}
+
+.upload-progress.is-failed {
+  border-color: var(--red-pen);
+}
+
+.upload-progress.is-failed .upload-track span {
+  background: var(--red-pen);
+}
+
+.upload-steps {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--step--1);
+  color: var(--pencil);
+}
+
+.upload-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.upload-steps li.is-done {
+  color: var(--green-tick);
+}
+
+.upload-steps li.is-now {
   color: var(--ink);
+  font-weight: 700;
+}
+
+.upload-steps li.is-now::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--highlight);
+  animation: pulse 1.2s var(--ease-out) infinite;
+}
+
+.upload-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
 
 .upload-sample {
@@ -469,6 +567,18 @@
 
 .settings-account h2 {
   font-size: var(--step-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-mark,
+  .boot-mark path,
+  .upload-steps li.is-now::before {
+    animation: none;
+  }
+
+  .upload-track span {
+    transition: none;
+  }
 }
 
 @media (max-width: 760px) {

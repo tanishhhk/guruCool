@@ -88,10 +88,44 @@ export async function waitForServer(onWaiting, signal) {
   return false;
 }
 
-export async function uploadPdf(file) {
+// Upload with progress: fetch cannot report upload progress, XMLHttpRequest can.
+export function uploadPdf(file, onProgress) {
   const form = new FormData();
   form.append("file", file);
-  return api("/documents/upload", { method: "POST", form, headers: { "Idempotency-Key": crypto.randomUUID() } });
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", `${API_URL}/documents/upload`);
+    const token = session.token;
+    if (token) request.setRequestHeader("Authorization", `Bearer ${token}`);
+    request.setRequestHeader("Idempotency-Key", crypto.randomUUID());
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(event.loaded / event.total);
+    };
+    request.onerror = () => reject(new ApiError("The server cannot be reached. Check your connection and try again.", 0));
+    request.onload = () => {
+      let payload = {};
+      try {
+        payload = JSON.parse(request.responseText || "{}");
+      } catch {
+        // Not JSON; the status decides.
+      }
+      if (request.status === 401 && token) {
+        session.clear();
+        window.dispatchEvent(new Event("gurucool:signed-out"));
+      }
+      if (request.status >= 200 && request.status < 300) resolve(payload);
+      else {
+        reject(
+          new ApiError(
+            readError(payload, "The upload did not work. Try again."),
+            request.status,
+            Number(request.getResponseHeader("Retry-After")) || undefined,
+          ),
+        );
+      }
+    };
+    request.send(form);
+  });
 }
 
 export async function waitForDocument(id, onProgress) {

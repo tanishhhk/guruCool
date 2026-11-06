@@ -80,10 +80,11 @@ export default function WelcomeTour({ open, userId, usage, onClose }) {
 
   useEffect(() => {
     if (!open) return undefined;
+    markTourSeen(userId); // Shown once, even if the page reloads before it is closed.
     const previous = window.document.activeElement;
     panel.current?.focus();
     return () => previous?.focus?.();
-  }, [open]);
+  }, [open, userId]);
 
   if (!open) return null;
 
