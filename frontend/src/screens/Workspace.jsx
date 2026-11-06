@@ -4,6 +4,8 @@ import { Menu, X } from "lucide-react";
 import { api } from "../api";
 import { Logo } from "../components/Logo";
 import Shelf from "../components/Shelf";
+import WelcomeTour from "../components/WelcomeTour";
+import { tourSeen } from "../lib/tour";
 import DocumentView from "./DocumentView";
 import Home from "./Home";
 import Settings from "./Settings";
@@ -16,6 +18,7 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
   const [view, setView] = useState(initialDocument ? "document" : "home");
   const [usage, setUsage] = useState(null);
   const [drawer, setDrawer] = useState(false);
+  const [tour, setTour] = useState(() => !tourSeen(user.id));
 
   const refreshUsage = useCallback(() => {
     api("/auth/me/usage").then(setUsage).catch(() => {});
@@ -82,6 +85,10 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
             setView("settings");
             setDrawer(false);
           }}
+          onTour={() => {
+            setTour(true);
+            setDrawer(false);
+          }}
           onSignOut={onSignOut}
         />
       </div>
@@ -95,6 +102,7 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
         )}
       </main>
 
+      <WelcomeTour open={tour} userId={user.id} usage={usage} onClose={() => setTour(false)} />
     </div>
   );
 }

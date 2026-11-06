@@ -1,0 +1,267 @@
+/* The welcome tour: one paper card over the dimmed desk. */
+.tour-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: rgba(14, 34, 41, 0.62);
+  animation: fade 200ms var(--ease-out);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.tour {
+  position: relative;
+  width: min(100%, 540px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  background: var(--paper);
+  border-radius: var(--radius-m);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.55);
+  animation: lift 320ms var(--ease-out);
+}
+
+.tour:focus {
+  outline: none;
+}
+
+@keyframes lift {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+.tour-close {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
+  color: var(--ink-soft);
+}
+
+.tour-close:hover {
+  color: var(--paper);
+  background: var(--ink-2);
+}
+
+.tour-pic {
+  height: 200px;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 100% at 50% 0%, var(--ink-2) 0%, var(--ink) 75%);
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+  overflow: hidden;
+}
+
+.tour-pic-drop {
+  position: relative;
+}
+
+.tour-drop {
+  width: 160px;
+  height: 92px;
+  border: 2px dashed var(--ink-3);
+  border-radius: var(--radius-m);
+  margin-top: 54px;
+}
+
+.tour-page {
+  position: absolute;
+  top: 34px;
+  width: 54px;
+  height: 70px;
+  border-radius: 4px;
+  background: var(--paper) linear-gradient(var(--highlight), var(--highlight)) no-repeat 10px 30px / 32px 8px;
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.6);
+  animation: drop 1.6s var(--ease-out) both;
+}
+
+@keyframes drop {
+  from {
+    transform: translateY(-60px) rotate(-8deg);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(28px) rotate(-3deg);
+  }
+}
+
+.tour-screen {
+  width: 240px;
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  position: relative;
+  border-radius: 8px;
+  background: var(--ink);
+  border: 1px solid var(--ink-3);
+  color: var(--highlight);
+}
+
+.tour-bar {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(var(--highlight), var(--highlight)) no-repeat 0 0 / 0% 100%, var(--ink-2);
+  animation: fill 2.4s var(--ease-out) forwards;
+}
+
+@keyframes fill {
+  to {
+    background-size: 70% 100%, auto;
+  }
+}
+
+.tour-pic-chat {
+  align-content: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-6);
+}
+
+.tour-note {
+  justify-self: end;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 12px 12px 4px 12px;
+  background: var(--ink-3);
+  color: var(--paper);
+  font-size: var(--step--1);
+  animation: settle 400ms var(--ease-out) both;
+}
+
+.tour-answer {
+  justify-self: start;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--step--1);
+  animation: settle 400ms 450ms var(--ease-out) both;
+}
+
+.tour-chip {
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255, 201, 77, 0.3);
+  color: var(--marigold-text);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.tour-pic-shelf {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  gap: 10px;
+  padding-bottom: 46px;
+}
+
+.tour-book {
+  width: 34px;
+  height: 104px;
+  border-radius: 4px;
+  box-shadow: inset 8px 0 0 rgba(0, 0, 0, 0.22);
+  animation: stand 500ms var(--ease-out) both;
+}
+
+.tour-book:nth-child(2) {
+  height: 118px;
+  animation-delay: 80ms;
+}
+
+.tour-book:nth-child(3) {
+  height: 96px;
+  animation-delay: 160ms;
+}
+
+.tour-book:nth-child(4) {
+  height: 110px;
+  transform: rotate(8deg);
+  animation-delay: 240ms;
+}
+
+@keyframes stand {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+}
+
+.tour-body {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-6) var(--space-3);
+}
+
+.tour-count {
+  font-size: 1rem;
+}
+
+.tour-body h2 {
+  font-size: var(--step-3);
+}
+
+.tour-body p:last-child {
+  color: var(--pencil);
+  line-height: 1.6;
+}
+
+.tour-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6) var(--space-5);
+}
+
+.tour-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.tour-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--rule);
+  transition: width 240ms var(--ease-out), background 240ms;
+}
+
+.tour-dots span.is-on {
+  width: 24px;
+  background: var(--marigold-text);
+}
+
+.tour-buttons {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-backdrop,
+  .tour,
+  .tour-page,
+  .tour-bar,
+  .tour-note,
+  .tour-answer,
+  .tour-book {
+    animation: none;
+  }
+
+  .tour-bar {
+    background-size: 70% 100%, auto;
+  }
+}
