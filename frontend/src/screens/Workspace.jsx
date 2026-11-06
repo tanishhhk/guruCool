@@ -8,7 +8,7 @@ import WelcomeTour from "../components/WelcomeTour";
 import { tourSeen } from "../lib/tour";
 import DocumentView from "./DocumentView";
 import Home from "./Home";
-import Settings from "./Settings";
+import Profile from "./Profile";
 
 // The signed-in app: the shelf of documents on the left, the open page on the right.
 export default function Workspace({ user, initialDocument, onUser, onSignOut }) {
@@ -96,7 +96,7 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
 
       <main className="page-area">
         {view === "home" && <Home user={user} items={items} usage={usage} onReady={(document) => { onUsed(); open(document); }} onOpen={open} />}
-        {view === "settings" && <Settings user={user} onSaved={onUser} onSignOut={onSignOut} />}
+        {view === "settings" && <Profile user={user} usage={usage} onUser={onUser} onSignOut={onSignOut} />}
         {view === "document" && current && (
           <DocumentView key={current.id} document={current} user={user} usage={usage} onUsed={onUsed} onDeleted={removed} />
         )}

@@ -8,6 +8,7 @@ import "./styles/workspace.css";
 import "./styles/chat.css";
 import "./styles/explain.css";
 import "./styles/tour.css";
+import "./styles/profile.css";
 import App from "./App.jsx";
 
 createRoot(document.getElementById("root")).render(
