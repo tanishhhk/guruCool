@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 import { api } from "../api";
 import { Logo } from "../components/Logo";
@@ -45,9 +45,6 @@ export default function Onboarding({ user, onDone, onSkip }) {
     <main className="onboarding">
       <header className="onboarding-top">
         <Logo size={30} />
-        <button type="button" className="onboarding-skip" onClick={onSkip}>
-          Skip for now
-        </button>
       </header>
 
       <section className="onboarding-page" aria-live="polite">
@@ -108,6 +105,10 @@ export default function Onboarding({ user, onDone, onSkip }) {
               })()}
             </p>
             <UploadBox offerSample onReady={(document) => onDone(null, document, true)} />
+            <button type="button" className="button button-quiet onboarding-skip" onClick={onSkip}>
+              Skip for now, take me to my desk
+              <ArrowRight size={18} strokeWidth={1.75} aria-hidden="true" />
+            </button>
           </>
         )}
       </section>

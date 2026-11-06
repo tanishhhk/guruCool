@@ -43,11 +43,7 @@
 }
 
 .onboarding-skip {
-  color: var(--ink-soft);
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  justify-self: start;
 }
 
 .onboarding-page {
