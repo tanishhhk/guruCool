@@ -1,7 +1,7 @@
 // Google and phone sign-in through Firebase. The library is loaded only when
 // someone taps one of these buttons, so it never slows the first page load.
 async function load(config) {
-  const [{ initializeApp, getApps }, authModule] = await Promise.all([import("firebase/app"), import("firebase/auth")]);
+  const [{ initializeApp, getApps }, authModule] = await Promise.all([import("@firebase/app"), import("@firebase/auth")]);
   const app = getApps()[0] ?? initializeApp(config);
   return { auth: authModule.getAuth(app), authModule };
 }
