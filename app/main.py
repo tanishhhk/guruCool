@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
-from app.api import activity, auth, chat, documents, videos
+from app.api import account, activity, auth, chat, documents, videos
 from app.config import settings
 from app.database import SessionLocal, engine, run_migrations, schema_is_current
 from app.logging_config import configure_logging
@@ -75,6 +75,7 @@ app.include_router(documents.router, prefix="/documents", tags=["Documents"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 app.include_router(videos.router, prefix="/videos", tags=["Stories and videos"])
 app.include_router(activity.router, prefix="/activity", tags=["Activity"])
+app.include_router(account.router, prefix="/account", tags=["Account"])
 
 
 @app.get("/")
