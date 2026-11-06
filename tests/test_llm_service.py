@@ -73,3 +73,31 @@ def test_other_citation_bracket_styles_are_read_and_normalized():
     )
     assert answer == "Opened in Singapore[S1]. Staff moved [S2] and paid [S3]."
     assert cited == ["S1", "S2", "S3"]
+
+
+def test_instruction_asks_for_plain_explanations():
+    instruction = llm.SYSTEM_INSTRUCTION
+    assert "own simple words" in instruction
+    assert "Never copy a sentence" in instruction
+    assert "under 150 words" in instruction
+    assert llm.NOT_FOUND_ANSWER in instruction
+
+
+def test_history_comes_before_sources_and_question():
+    message = llm.build_user_message(
+        "And the second?",
+        [_source("S1", "The second rule is rest.")],
+        history=[("What is the first rule?", "The first rule is water. [S2]")],
+    )
+    assert message.index("<previous_turns>") < message.index("<source") < message.index("Question:")
+    assert "Q: What is the first rule?" in message
+    assert "A: The first rule is water." in message
+
+
+def test_history_answers_lose_citations_and_are_cut():
+    long_answer = "Point [S1]. " + "word " * 500
+    message = llm.build_user_message("Next?", [_source("S1", "Text.")], history=[("Q1", long_answer)])
+    turns = message[message.index("<previous_turns>"): message.index("</previous_turns>")]
+    answer_line = next(line for line in turns.splitlines() if line.startswith("A: "))
+    assert "[S1]" not in answer_line
+    assert len(answer_line) <= len("A: ") + 600
