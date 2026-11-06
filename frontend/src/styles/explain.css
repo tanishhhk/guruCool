@@ -220,3 +220,7 @@
     transition: none;
   }
 }
+
+.explain-after a.button {
+  text-decoration: none;
+}
