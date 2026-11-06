@@ -15,6 +15,7 @@ from app.schemas.user import (
     CodeResend,
     EmailOnly,
     EmailVerification,
+    FirebaseToken,
     PasswordReset,
     ProfileUpdate,
     Registered,
@@ -24,7 +25,7 @@ from app.schemas.user import (
     UserLogin,
     UserResponse,
 )
-from app.services import email_codes, lenses, mailer, plans, usage
+from app.services import email_codes, lenses, mailer, plans, sign_in_methods, usage
 from app.services.auth import (
     decode_access_token,
     get_password_hash,
@@ -55,12 +56,28 @@ _BAD_CODE = HTTPException(
 @router.get("/providers")
 def providers():
     """Which sign-in features are switched on, so the web app shows only those."""
+    firebase = settings.firebase_enabled
     return {
         "email_verification": settings.email_verification_enabled,
-        "google": False,
-        "phone": False,
-        "firebase": None,
+        "google": firebase,
+        "phone": firebase and settings.firebase_phone_enabled,
+        "firebase": {
+            "apiKey": settings.firebase_api_key,
+            "authDomain": settings.firebase_auth_domain or f"{settings.firebase_project_id}.firebaseapp.com",
+            "projectId": settings.firebase_project_id,
+        }
+        if firebase
+        else None,
     }
+
+
+@router.post("/firebase", response_model=Token)
+def firebase_sign_in(body: FirebaseToken, db: Session = Depends(get_db)):
+    """Sign in, or sign up, with a Google or phone sign-in done through Firebase."""
+    if not settings.firebase_project_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This sign-in method is not available.")
+    user = sign_in_methods.user_for_token(db, body.id_token)
+    return {"access_token": issue_token(user), "token_type": "bearer"}
 
 
 @router.post("/register", response_model=Registered, status_code=status.HTTP_201_CREATED)
@@ -94,7 +111,7 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     email = str(user_data.email).strip().lower()
     user = db.query(User).filter(User.email == email).first()
 
-    if user is None:
+    if user is None or not user.hashed_password:
         valid = verify_password_for_missing_user(user_data.password)
     else:
         valid = verify_password(user_data.password, user.hashed_password)

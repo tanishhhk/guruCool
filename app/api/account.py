@@ -15,7 +15,9 @@ from app.models.usage import UsageCounter
 from app.models.user import User
 from app.models.video_job import VideoJob
 from app.schemas.account import AccountDeletion, AccountResponse, NameUpdate, PasswordChange, StoryPreferences
-from app.services import video_jobs
+from app.config import settings
+from app.schemas.user import FirebaseToken
+from app.services import sign_in_methods, video_jobs
 from app.services.auth import get_password_hash, issue_token, verify_password
 
 logger = logging.getLogger(__name__)
@@ -23,13 +25,17 @@ router = APIRouter()
 
 
 def account_view(user: User) -> dict:
-    methods = ["password"] if user.hashed_password else []
+    methods = [
+        method
+        for method, present in (("password", user.hashed_password), ("google", user.firebase_uid), ("phone", user.phone))
+        if present
+    ]
     return {
         "id": user.id,
         "email": user.email,
         "email_verified": bool(user.email_verified),
         "display_name": user.display_name,
-        "phone": getattr(user, "phone", None),
+        "phone": user.phone,
         "has_password": bool(user.hashed_password),
         "sign_in_methods": methods,
         "profession": user.profession,
@@ -77,6 +83,16 @@ def story_preferences(
     """The voice, length and telling that new videos start with."""
     current_user.story_voice, current_user.story_depth, current_user.story_style = body.voice, body.depth, body.style
     db.commit()
+    db.refresh(current_user)
+    return account_view(current_user)
+
+
+@router.post("/connect", response_model=AccountResponse)
+def connect(body: FirebaseToken, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Add Google or a phone number as another way into this account."""
+    if not settings.firebase_project_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="This sign-in method is not available.")
+    sign_in_methods.connect(db, current_user, body.id_token)
     db.refresh(current_user)
     return account_view(current_user)
 

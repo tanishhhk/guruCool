@@ -223,6 +223,13 @@ Requires the bearer token. The current access token is added to the revocation t
 
 To send real emails: create a free [Brevo](https://www.brevo.com) account (300 emails a day), verify a sender address, create an API key, and set `EMAIL_PROVIDER=brevo`, `BREVO_API_KEY` and `EMAIL_FROM_ADDRESS`. Brevo is used over HTTPS because Render's free plan blocks outgoing SMTP. With `EMAIL_PROVIDER=none` new accounts count as verified.
 
+**Google and phone sign-in.** The web app signs in with [Firebase Authentication](https://firebase.google.com/docs/auth) and sends the Firebase ID token to `POST /auth/firebase` (`id_token`), which returns a guruKool token. A Google sign-in joins an existing account with the same address only when Google has verified it. A signed-in account can add Google or a phone number with `POST /account/connect`. To switch it on:
+
+1. Create a Firebase project, open Authentication, and enable the Google provider (free). For phone numbers also enable the Phone provider; Firebase sends SMS only on the pay-as-you-go Blaze plan, charged per message.
+2. Under Authentication settings, add your site's domain (for example `tanishhhk.github.io`) to the authorised domains.
+3. From Project settings, add a web app and copy its `apiKey`, `authDomain` and `projectId`.
+4. Set `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` and `FIREBASE_AUTH_DOMAIN` on the API, and `FIREBASE_PHONE_ENABLED=true` once phone sign-in is paid for. These web values are public by design; the API checks every token's signature, audience and expiry.
+
 **Your account** (`/account`, bearer token): `GET` it, `PATCH` a `display_name`, `POST /account/password` with `current_password` and `new_password`, `POST /account/sign-out-everywhere`, and `POST /account/delete` with `confirm: "DELETE"` and `password`, which deletes every document, chat and video.
 
 ### Documents

@@ -31,6 +31,13 @@ services:
         sync: false
       - key: EMAIL_FROM_ADDRESS
         sync: false
+      # Google and phone sign-in: the Firebase web config (public values).
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_API_KEY
+        sync: false
+      - key: FIREBASE_PHONE_ENABLED
+        value: "false"
       - key: CORS_ORIGINS
         value: '["https://tanishhhk.github.io"]'
       - key: ACCESS_TOKEN_EXPIRE_MINUTES

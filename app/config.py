@@ -101,6 +101,14 @@ class Settings(BaseSettings):
     email_from_address: str = Field(default="", max_length=200)
     email_from_name: str = Field(default="guruKool", max_length=100)
 
+    # Google and phone sign-in through Firebase Authentication. Google is on when
+    # the project id and web API key are set; phone also needs FIREBASE_PHONE_ENABLED
+    # (it needs Firebase's paid Blaze plan, charged per SMS).
+    firebase_project_id: str = Field(default="", max_length=100)
+    firebase_api_key: str = Field(default="", max_length=200)
+    firebase_auth_domain: str = Field(default="", max_length=200)
+    firebase_phone_enabled: bool = False
+
     auth_requests_per_minute: int = Field(default=30, ge=1, le=100_000)
     upload_requests_per_minute: int = Field(default=8, ge=1, le=100_000)
     chat_requests_per_minute: int = Field(default=20, ge=1, le=100_000)
@@ -130,6 +138,10 @@ class Settings(BaseSettings):
     @property
     def llm_provider_order(self) -> list[str]:
         return [name for name in self.llm_providers.split(",") if name]
+
+    @property
+    def firebase_enabled(self) -> bool:
+        return bool(self.firebase_project_id and self.firebase_api_key)
 
     @property
     def email_verification_enabled(self) -> bool:

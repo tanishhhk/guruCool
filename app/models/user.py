@@ -10,8 +10,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    # Phone-only accounts have no email; Google-only accounts have no password.
+    email = Column(String, unique=True, index=True, nullable=True)
+    hashed_password = Column(String, nullable=True)
+    phone = Column(String(20), unique=True, nullable=True)  # E.164, verified by Firebase
+    firebase_uid = Column(String(128), unique=True, nullable=True)  # the Google sign-in
     created_at = Column(DateTime, default=datetime.utcnow)
     # Chosen in onboarding; see app.services.lenses.
     profession = Column(String(20), nullable=True)

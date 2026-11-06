@@ -29,6 +29,7 @@ PUBLIC_ROUTES = {
     ("POST", "/auth/forgot-password"),
     ("POST", "/auth/reset-password"),
     ("GET", "/plans"),
+    ("POST", "/auth/firebase"),
 }
 
 

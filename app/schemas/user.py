@@ -22,6 +22,10 @@ class UserCreate(BaseModel):
         return _validate_bcrypt_password_bytes(value)
 
 
+class FirebaseToken(BaseModel):
+    id_token: str = Field(min_length=20, max_length=4096)
+
+
 class EmailOnly(BaseModel):
     email: EmailStr
 
@@ -68,7 +72,8 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
-    email: str
+    email: str | None = None
+    phone: str | None = None
     created_at: datetime
     profession: str | None = None
     focus: str | None = None
