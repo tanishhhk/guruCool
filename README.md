@@ -73,6 +73,17 @@ Questions send only the few retrieved passages, about 1,000 to 2,000 tokens, so 
 
 Hosted free tiers may log or train on prompts, and prompts contain passages from users' documents. Use Ollama when documents are confidential.
 
+#### Run a model on your own computer (Ollama)
+
+Ollama runs on the computer that runs the API. A hosted API (Render, a Space) cannot reach a model on your laptop, so this is for running guruKool locally.
+
+1. Install Ollama. On Windows: `winget install --id Ollama.Ollama -e`. It starts in the background and listens on `http://localhost:11434`.
+2. Download a model. `qwen3:8b` (about 5 GB) runs well on a GPU with 8 GB of memory; on a laptop without a GPU use `qwen3:4b`. Run `ollama pull qwen3:8b`.
+3. In `.env`, set `OLLAMA_MODEL=qwen3:8b` and keep `ollama` first in `LLM_PROVIDERS`. If the other providers have keys, they take over when Ollama is not running.
+4. Start the API and ask a question. The response's `metadata.provider` is `ollama`.
+
+Reasoning models write a hidden `<think>` section before answering; guruKool removes it. A first answer can take 10 to 30 seconds while the model loads into memory; later ones are faster. If answers time out, raise `LLM_TIMEOUT_SECONDS` (for example to 60).
+
 When no provider can answer and `ANSWER_FALLBACK=extractive` (the default), the response has `answer_status: "extractive"` and contains the best-matching passages with their pages, stating that it is not an AI answer. `metadata.fallback_reason` says why. With `ANSWER_FALLBACK=none`, the error codes listed under Questions are returned instead.
 
 Run the API:

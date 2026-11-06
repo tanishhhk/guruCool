@@ -8,6 +8,7 @@ OpenRouter, Groq and Ollama share the OpenAI chat completions format and
 use OpenAICompatibleProvider; Gemini uses the Google GenAI SDK.
 """
 import logging
+import re
 import threading
 
 import httpx
@@ -19,6 +20,12 @@ logger = logging.getLogger(__name__)
 FAILURE_PRIORITY = ["busy", "timeout", "unavailable", "empty", "rejected", "misconfigured"]
 
 _MAX_ANSWER_CHARS = 8000
+_THINKING = re.compile(r"<think>.*?(</think>|$)", re.DOTALL | re.IGNORECASE)
+
+
+def strip_reasoning(text: str) -> str:
+    """Remove <think> blocks that local reasoning models such as qwen3 write before answering."""
+    return _THINKING.sub("", text).strip()
 
 
 class ProviderFailure(Exception):
@@ -133,7 +140,7 @@ class OpenAICompatibleProvider:
         if choice.get("finish_reason") == "length":
             logger.warning("Answer reached the output token limit.", extra={"provider": self.name})
         message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
-        text = _message_text(message.get("content")).strip()
+        text = strip_reasoning(_message_text(message.get("content")))
         if not text:
             # A reasoning model can spend the whole output limit thinking and
             # return nothing. Another attempt, often routed to another free
