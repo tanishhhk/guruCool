@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.config import settings
 from app.database import get_db
+from app.models.chat_message import ChatMessage
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.models.upload_idempotency import UploadIdempotency
@@ -418,6 +419,7 @@ def delete_document(
     file_path = document.file_path
     story_ids = [row[0] for row in db.query(VideoJob.id).filter(VideoJob.document_id == document_id)]
     db.query(VideoJob).filter(VideoJob.document_id == document_id).delete(synchronize_session=False)
+    db.query(ChatMessage).filter(ChatMessage.document_id == document_id).delete(synchronize_session=False)
     db.query(DocumentChunk).filter(
         DocumentChunk.document_id == document_id
     ).delete(synchronize_session=False)

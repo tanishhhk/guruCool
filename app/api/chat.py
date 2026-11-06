@@ -1,12 +1,16 @@
+import json
 import logging
+import uuid
+from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.config import settings
 from app.database import get_db
+from app.models.chat_message import ChatMessage
 from app.models.document import Document
 from app.models.user import User
 from app.services import ingestion, usage
@@ -65,13 +69,52 @@ class QuestionRequest(BaseModel):
     top_k: int = Field(default=3, ge=1, le=10)
 
 
+# Earlier turns given to the model so follow-up questions make sense.
+HISTORY_TURNS = 2
+
+
+def _owned_document(db: Session, document_id: str, user_id: str) -> Document:
+    document = None
+    if "\x00" not in document_id:  # PostgreSQL cannot compare text with NUL bytes.
+        document = (
+            db.query(Document)
+            .filter(Document.id == document_id, Document.user_id == user_id)
+            .first()
+        )
+    if document is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
+    return document
+
+
+def _recent_turns(db: Session, document_id: str) -> list[tuple[str, str]]:
+    rows = (
+        db.query(ChatMessage.question, ChatMessage.answer)
+        .filter(ChatMessage.document_id == document_id, ChatMessage.answer_status != "extractive")
+        .order_by(ChatMessage.created_at.desc())
+        .limit(HISTORY_TURNS)
+        .all()
+    )
+    return [(question, answer) for question, answer in reversed(rows)]
+
+
+def _message_view(message: ChatMessage) -> dict:
+    return {
+        "id": message.id,
+        "question": message.question,
+        "answer": message.answer,
+        "answer_status": message.answer_status,
+        "sources": json.loads(message.sources),
+        "created_at": message.created_at,
+    }
+
+
 @router.post("/ask")
 def ask_question(
     request: QuestionRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Answer a question using only a document owned by the current user."""
+    """Answer a question from one of your documents, and save it to that document's chat."""
     question = request.question.strip()
     if not question:
         raise HTTPException(
@@ -79,18 +122,7 @@ def ask_question(
             detail="Question cannot be blank.",
         )
 
-    document = None
-    if "\x00" not in request.document_id:  # PostgreSQL cannot compare text with NUL bytes.
-        document = (
-            db.query(Document)
-            .filter(
-                Document.id == request.document_id,
-                Document.user_id == current_user.id,
-            )
-            .first()
-        )
-    if document is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found.")
+    document = _owned_document(db, request.document_id, current_user.id)
     if document.status in (ingestion.QUEUED, ingestion.PROCESSING):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -114,7 +146,9 @@ def ask_question(
 
     fallback_reason = None
     try:
-        generated = generate_answer(question, result.chunks, current_user.focus)
+        generated = generate_answer(
+            question, result.chunks, current_user.focus, history=_recent_turns(db, document.id)
+        )
     except AnswerServiceError as exc:
         logger.warning("Answer generation failed.", extra={"kind": exc.kind})
         if settings.answer_fallback != "extractive":
@@ -135,23 +169,38 @@ def ask_question(
         answer, cited = cited_source_ids(generated.text, result.chunks)
         found = bool(cited) or NOT_FOUND_ANSWER.lower() not in answer.lower()
         answer_status = "answered" if found else "not_found"
+    sources = [
+        {
+            "source_id": chunk.source_id,
+            "chunk_index": chunk.chunk_index,
+            "page_start": chunk.page_start,
+            "page_end": chunk.page_end,
+            "similarity_score": round(chunk.score, 6),
+            "preview": chunk.text[:360],
+            "cited": chunk.source_id in cited,
+        }
+        for chunk in result.chunks
+    ]
+    message = ChatMessage(
+        id=str(uuid.uuid4()),
+        user_id=current_user.id,
+        document_id=document.id,
+        question=question,
+        answer=answer,
+        answer_status=answer_status,
+        sources=json.dumps(sources),
+        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+    )
+    db.add(message)
+    db.commit()
     return {
+        "message_id": message.id,
+        "created_at": message.created_at,
         "answer": answer,
         "answer_status": answer_status,
         "document_id": document.id,
         "document_name": document.filename,
-        "sources": [
-            {
-                "source_id": chunk.source_id,
-                "chunk_index": chunk.chunk_index,
-                "page_start": chunk.page_start,
-                "page_end": chunk.page_end,
-                "similarity_score": round(chunk.score, 6),
-                "preview": chunk.text[:360],
-                "cited": chunk.source_id in cited,
-            }
-            for chunk in result.chunks
-        ],
+        "sources": sources,
         "metadata": {
             "chunks_searched": result.searched,
             "chunks_skipped": result.skipped,
@@ -161,3 +210,35 @@ def ask_question(
             "fallback_reason": fallback_reason,
         },
     }
+
+
+@router.get("/history/{document_id}")
+def chat_history(
+    document_id: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """The latest questions and answers for one of your documents, oldest first."""
+    document = _owned_document(db, document_id, current_user.id)
+    rows = (
+        db.query(ChatMessage)
+        .filter(ChatMessage.document_id == document.id)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return {"messages": [_message_view(row) for row in reversed(rows)]}
+
+
+@router.delete("/history/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def clear_history(
+    document_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Clear the chat of one of your documents."""
+    document = _owned_document(db, document_id, current_user.id)
+    db.query(ChatMessage).filter(ChatMessage.document_id == document.id).delete(synchronize_session=False)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
