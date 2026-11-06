@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { AlertCircle, Check, Eye, EyeOff } from "lucide-react";
 
 import { api, session } from "../api";
+import { ResetStep, VerifyStep } from "../components/AccountSteps";
 import Guru from "../components/Guru";
 import { Logo } from "../components/Logo";
 
@@ -21,7 +22,9 @@ const useNarrow = () =>
   );
 
 // What the guru says. Decorative: every fact here is also in the form's own text.
-function line({ creating, focus, email, password, show, busy, troubled, failure }) {
+function line({ stage, creating, focus, email, password, show, busy, troubled, failure }) {
+  if (stage === "verify") return "A code is flying to your inbox. Six digits, then you are in.";
+  if (stage === "reset") return "Forgotten secrets happen to the wisest. Let us make a new one.";
   if (busy) return creating ? "Writing your name in my book." : "Opening your library.";
   if (failure) return "Hmm. That did not open the door. Try again?";
   if (troubled) return "Hmm. Read the note under the field and try again.";
@@ -30,7 +33,8 @@ function line({ creating, focus, email, password, show, busy, troubled, failure 
     if (!creating) return "I am not looking. Promise.";
     const left = MIN_PASSWORD - password.length;
     if (left === 1) return "One more character to fill my halo.";
-    return left > 0 ? `${left} more characters to fill my halo.` : "Halo full. A strong secret.";
+    if (left > 0) return `${left} more characters to fill my halo.`;
+    return mixed(password) ? "Halo full. A strong secret." : "Halo full. A number or symbol would make it stronger.";
   }
   if (focus === "email") {
     if (!email) return "Your email, please. I never forget one.";
@@ -41,6 +45,9 @@ function line({ creating, focus, email, password, show, busy, troubled, failure 
     ? "A new seeker. Bring me any PDF and I will answer from its pages."
     : "Welcome back, seeker. Your library missed you.";
 }
+
+// Letters plus a number or symbol: a quick sign of a stronger password.
+const mixed = (value) => /[a-z]/i.test(value) && /[^a-z]/i.test(value);
 
 // Types the guru's line out a few letters at a time. Keyed by the text, so
 // each new line starts from its first letter.
@@ -68,6 +75,7 @@ export default function SignIn({ onSignedIn }) {
   const [errors, setErrors] = useState({});
   const [failure, setFailure] = useState("");
   const [busy, setBusy] = useState(false);
+  const [stage, setStage] = useState("form"); // form, verify or reset
   const close = useNarrow();
   const creating = mode === "create";
   const troubled = Boolean(failure || errors.email || errors.password);
@@ -90,14 +98,32 @@ export default function SignIn({ onSignedIn }) {
     setFailure("");
     const credentials = { email: email.trim(), password };
     try {
-      if (creating) await api("/auth/register", { method: "POST", body: credentials });
+      if (creating) {
+        const created = await api("/auth/register", { method: "POST", body: credentials });
+        if (created.verification_required) {
+          setBusy(false);
+          setStage("verify");
+          return;
+        }
+      }
       const { access_token: token } = await api("/auth/login", { method: "POST", body: credentials });
-      session.save(token);
-      onSignedIn();
+      signIn(token);
     } catch (error) {
-      setFailure(error.message);
       setBusy(false);
+      // 403: the email is not verified yet, and the API has sent a fresh code.
+      if (error.status === 403) setStage("verify");
+      else setFailure(error.message);
     }
+  };
+
+  const signIn = (token) => {
+    session.save(token);
+    onSignedIn();
+  };
+
+  const backToForm = () => {
+    setStage("form");
+    setFailure("");
   };
 
   const switchTo = (next) => {
@@ -121,13 +147,15 @@ export default function SignIn({ onSignedIn }) {
 
   // While the email is typed, his eyes follow the text along the field.
   const look = focus === "email" ? { x: 0.35 + Math.min(1, email.length / 28) * 0.65, y: 0.45 } : null;
-  const speech = line({ creating, focus, email, password, show, busy, troubled, failure });
+  const speech = line({ stage, creating, focus, email, password, show, busy, troubled, failure });
   const lit = creating ? Math.min(4, Math.floor(password.length / (MIN_PASSWORD / 4))) : 4;
   const passwordNote = errors.password
     ? null
     : creating
       ? password.length >= MIN_PASSWORD
-        ? "Long enough."
+        ? mixed(password)
+          ? "Long enough, with a good mix."
+          : "Long enough. Adding a number or symbol makes it stronger."
         : `At least ${MIN_PASSWORD} characters. A short sentence works well.`
       : null;
 
@@ -141,103 +169,114 @@ export default function SignIn({ onSignedIn }) {
       <section className="gc-panel">
         <Logo size={30} className="gc-logo" />
         <div className="gc-panel-inner">
-          <h1 className="gc-title">{creating ? "Create your account" : "Welcome back"}</h1>
-          <p className="gc-lede">Ask any PDF a question and see the page each answer comes from.</p>
-
-          <div className="gc-switch" role="group" aria-label="Account">
-            {[
-              ["signin", "Sign in"],
-              ["create", "Create account"],
-            ].map(([id, label]) => (
-              <button key={id} type="button" aria-pressed={mode === id} onClick={() => switchTo(id)}>
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <form className="gc-form" onSubmit={submit} noValidate>
-            <div className="gc-field">
-              <label htmlFor="email">Email</label>
-              <div className="gc-input-wrap">
-                <input
-                  id="email"
-                  className="gc-input"
-                  type="email"
-                  autoComplete="email"
-                  autoCapitalize="none"
-                  spellCheck="false"
-                  value={email}
-                  onChange={edit(setEmail, "email")}
-                  onFocus={() => setFocus("email")}
-                  onBlur={() => setFocus(null)}
-                  aria-invalid={Boolean(errors.email)}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                />
-                {/* The guru's seal: the address looks right. */}
-                <span className={`gc-seal${EMAIL.test(email.trim()) ? " is-on" : ""}`} aria-hidden="true">
-                  <Check size={16} strokeWidth={3} />
-                </span>
+          {stage === "verify" && <VerifyStep email={email.trim()} onToken={signIn} onBack={backToForm} />}
+          {stage === "reset" && <ResetStep initialEmail={email.trim()} onToken={signIn} onBack={backToForm} />}
+          {stage === "form" && (
+            <>
+              <h1 className="gc-title">{creating ? "Create your account" : "Welcome back"}</h1>
+              <p className="gc-lede">Ask any PDF a question and see the page each answer comes from.</p>
+  
+              <div className="gc-switch" role="group" aria-label="Account">
+                {[
+                  ["signin", "Sign in"],
+                  ["create", "Create account"],
+                ].map(([id, label]) => (
+                  <button key={id} type="button" aria-pressed={mode === id} onClick={() => switchTo(id)}>
+                    {label}
+                  </button>
+                ))}
               </div>
-              {errors.email && (
-                <p className="gc-error" id="email-error">
-                  <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />
-                  {errors.email}
-                </p>
-              )}
-            </div>
-
-            <div className="gc-field">
-              <label htmlFor="password">Password</label>
-              <div className="gc-input-wrap">
-                <input
-                  id="password"
-                  className="gc-input"
-                  type={show ? "text" : "password"}
-                  autoComplete={creating ? "new-password" : "current-password"}
-                  value={password}
-                  onChange={edit(setPassword, "password")}
-                  onFocus={() => setFocus("password")}
-                  onBlur={() => setFocus(null)}
-                  aria-invalid={Boolean(errors.password)}
-                  aria-describedby="password-note"
-                />
-                {creating && (
-                  // Prayer beads that fill with the halo, one per three characters.
-                  <span className="gc-beads" aria-hidden="true">
-                    {[0, 1, 2, 3].map((bead) => (
-                      <span key={bead} className={bead < lit ? "is-lit" : ""} />
-                    ))}
-                  </span>
-                )}
-                <button
-                  type="button"
-                  className="gc-reveal"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => setShow((value) => !value)}
-                  aria-label={show ? "Hide password" : "Show password"}
-                  aria-pressed={show}
-                >
-                  {show ? <EyeOff size={20} strokeWidth={2} /> : <Eye size={20} strokeWidth={2} />}
+  
+              <form className="gc-form" onSubmit={submit} noValidate>
+                <div className="gc-field">
+                  <label htmlFor="email">Email</label>
+                  <div className="gc-input-wrap">
+                    <input
+                      id="email"
+                      className="gc-input"
+                      type="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      spellCheck="false"
+                      value={email}
+                      onChange={edit(setEmail, "email")}
+                      onFocus={() => setFocus("email")}
+                      onBlur={() => setFocus(null)}
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={errors.email ? "email-error" : undefined}
+                    />
+                    {/* The guru's seal: the address looks right. */}
+                    <span className={`gc-seal${EMAIL.test(email.trim()) ? " is-on" : ""}`} aria-hidden="true">
+                      <Check size={16} strokeWidth={3} />
+                    </span>
+                  </div>
+                  {errors.email && (
+                    <p className="gc-error" id="email-error">
+                      <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />
+                      {errors.email}
+                    </p>
+                  )}
+                </div>
+  
+                <div className="gc-field">
+                  <label htmlFor="password">Password</label>
+                  <div className="gc-input-wrap">
+                    <input
+                      id="password"
+                      className="gc-input"
+                      type={show ? "text" : "password"}
+                      autoComplete={creating ? "new-password" : "current-password"}
+                      value={password}
+                      onChange={edit(setPassword, "password")}
+                      onFocus={() => setFocus("password")}
+                      onBlur={() => setFocus(null)}
+                      aria-invalid={Boolean(errors.password)}
+                      aria-describedby="password-note"
+                    />
+                    {creating && (
+                      // Prayer beads that fill with the halo, one per three characters.
+                      <span className="gc-beads" aria-hidden="true">
+                        {[0, 1, 2, 3].map((bead) => (
+                          <span key={bead} className={bead < lit ? "is-lit" : ""} />
+                        ))}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="gc-reveal"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => setShow((value) => !value)}
+                      aria-label={show ? "Hide password" : "Show password"}
+                      aria-pressed={show}
+                    >
+                      {show ? <EyeOff size={20} strokeWidth={2} /> : <Eye size={20} strokeWidth={2} />}
+                    </button>
+                  </div>
+                  <p id="password-note" className={errors.password ? "gc-error" : "gc-note"}>
+                    {errors.password && <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />}
+                    {errors.password || passwordNote}
+                  </p>
+                  {!creating && (
+                    <button type="button" className="gc-link gc-forgot" onClick={() => setStage("reset")}>
+                      Forgot your password?
+                    </button>
+                  )}
+                </div>
+  
+                <button type="submit" className="gc-submit" disabled={busy}>
+                  {busy && <span className="spinner" aria-hidden="true" />}
+                  {busy ? (creating ? "Creating your account" : "Signing in") : creating ? "Create account" : "Sign in"}
                 </button>
-              </div>
-              <p id="password-note" className={errors.password ? "gc-error" : "gc-note"}>
-                {errors.password && <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />}
-                {errors.password || passwordNote}
-              </p>
-            </div>
-
-            <button type="submit" className="gc-submit" disabled={busy}>
-              {busy && <span className="spinner" aria-hidden="true" />}
-              {busy ? (creating ? "Creating your account" : "Signing in") : creating ? "Create account" : "Sign in"}
-            </button>
-
-            {failure && (
-              <p className="gc-error gc-failure" role="alert">
-                <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />
-                {failure}
-              </p>
-            )}
-          </form>
+  
+                {failure && (
+                  <p className="gc-error gc-failure" role="alert">
+                    <AlertCircle size={16} strokeWidth={2} aria-hidden="true" />
+                    {failure}
+                  </p>
+                )}
+              </form>
+            </>
+          )}
         </div>
       </section>
     </main>
