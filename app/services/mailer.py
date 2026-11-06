@@ -40,7 +40,8 @@ def _bodies(code: str, purpose: str) -> tuple[str, str]:
 def send_code(email: str, code: str, purpose: str) -> None:
     """Send a code. Failures are logged, not raised: the person can ask for another code."""
     if settings.email_provider == "console":
-        logger.warning("Email code (console provider).", extra={"purpose": purpose, "code": code})
+        # Local development only: the code goes to the log instead of an inbox.
+        logger.warning("Email code for %s (%s): %s", email, purpose, code)
         return
     if settings.email_provider != "brevo":
         return
