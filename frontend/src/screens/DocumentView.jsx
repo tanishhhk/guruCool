@@ -4,7 +4,7 @@ import { Clapperboard, MessageSquareText, MoreHorizontal, Trash2 } from "lucide-
 import { api } from "../api";
 import { focusPhrase } from "../lenses";
 import ChatPanel from "./ChatPanel";
-import StoryPanel from "./StoryPanel";
+import ExplainPanel from "./ExplainPanel";
 
 const TABS = [
   ["explain", "Watch it explained", Clapperboard],
@@ -118,7 +118,7 @@ export default function DocumentView({ document, user, usage, onUsed, onDeleted 
 
       <section className="doc-body" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "explain" ? (
-          <StoryPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} onAsk={() => setTab("chat")} />
+          <ExplainPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} onAsk={() => setTab("chat")} />
         ) : (
           <ChatPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} />
         )}

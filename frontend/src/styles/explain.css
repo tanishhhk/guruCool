@@ -1,0 +1,222 @@
+/* Explain: the video screen comes first; the script reads underneath it like a chapter. */
+.explain {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  min-height: 340px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-m);
+  color: var(--paper);
+  background: radial-gradient(120% 90% at 50% 0%, var(--ink-2) 0%, var(--ink) 70%);
+  box-shadow: 0 1px 2px rgba(14, 34, 41, 0.12), 0 24px 48px -28px rgba(14, 34, 41, 0.6);
+}
+
+.screen.has-video {
+  min-height: 0;
+  background: #000;
+}
+
+.screen-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.screen-start {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 46ch;
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
+.screen-start h2 {
+  font-size: var(--step-3);
+  text-wrap: balance;
+}
+
+.screen-start p {
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.screen-play {
+  margin-top: var(--space-3);
+  min-height: 52px;
+  padding: 0 var(--space-6);
+  font-size: 1.0625rem;
+}
+
+.screen-choose {
+  min-height: 40px;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--ink-3);
+}
+
+.screen-choose:hover {
+  color: var(--paper);
+  text-decoration-color: var(--highlight);
+}
+
+.screen-start .screen-locked {
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-s);
+  background: var(--ink-2);
+  color: var(--paper);
+}
+
+.making {
+  width: min(100%, 520px);
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-5);
+}
+
+.making-steps {
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.making-steps li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--ink-soft);
+  transition: color 300ms;
+}
+
+.making-mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.making-steps li.is-done {
+  color: var(--paper);
+}
+
+.making-steps li.is-done .making-mark {
+  border-color: var(--ink-3);
+  background: var(--ink-3);
+}
+
+.making-steps li.is-now {
+  color: var(--paper);
+  font-weight: 700;
+}
+
+.making-steps li.is-now .making-mark {
+  border-color: var(--highlight);
+  background: var(--highlight);
+  color: var(--ink);
+  animation: glow 1.6s var(--ease-out) infinite;
+}
+
+@keyframes glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 201, 77, 0.55);
+  }
+
+  100% {
+    box-shadow: 0 0 0 10px rgba(255, 201, 77, 0);
+  }
+}
+
+.making-track {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--ink-2);
+  overflow: hidden;
+}
+
+.making-track span {
+  display: block;
+  height: 100%;
+  background: var(--highlight);
+  transform-origin: left;
+  transition: transform 400ms linear;
+  clip-path: polygon(0 15%, 100% 0, 100% 85%, 0 100%);
+}
+
+.making-note {
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+
+.explain-setup {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.explain-after {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.explain-go {
+  justify-self: start;
+}
+
+.versions h2 {
+  font-size: var(--step-1);
+  margin-bottom: var(--space-2);
+}
+
+.versions ul {
+  list-style: none;
+}
+
+.version {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-height: 48px;
+  align-items: center;
+  border-top: 1px solid var(--rule);
+  text-align: left;
+}
+
+.version:hover span:first-child,
+.version.is-current span:first-child {
+  background: linear-gradient(var(--highlight-soft), var(--highlight-soft)) no-repeat 0 85% / 100% 40%;
+}
+
+@media (max-width: 600px) {
+  .screen {
+    aspect-ratio: auto;
+  }
+
+  .screen.has-video {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .making-steps li.is-now .making-mark {
+    animation: none;
+  }
+
+  .making-track span {
+    transition: none;
+  }
+}
