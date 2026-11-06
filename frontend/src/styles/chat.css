@@ -1,0 +1,248 @@
+/* Chat: questions are ink notes on the right, answers are page text with their folios. */
+.chat {
+  display: grid;
+  gap: var(--space-6);
+  min-height: calc(100vh - 320px);
+  align-content: start;
+}
+
+.chat-empty h2 {
+  font-size: var(--step-2);
+}
+
+.chat-empty p {
+  color: var(--pencil);
+  margin: var(--space-2) 0 var(--space-5);
+}
+
+.chat-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: calc(var(--space-4) * -1);
+}
+
+.chat-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--pencil);
+}
+
+.thread {
+  list-style: none;
+  display: grid;
+  gap: var(--space-7);
+}
+
+.exchange {
+  display: grid;
+  gap: var(--space-4);
+  animation: settle 320ms var(--ease-out);
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.asked {
+  justify-self: end;
+  max-width: min(80%, 56ch);
+  padding: var(--space-3) var(--space-4);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 14px 14px 4px 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.reply {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.reply.is-not-found .answer-text {
+  color: var(--pencil);
+  font-style: italic;
+}
+
+.reply-note {
+  color: var(--pencil);
+}
+
+.reply-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--ink-3);
+  font-size: var(--step--1);
+  font-weight: 700;
+  background: var(--paper);
+  transition: border-color 160ms, background 160ms;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: var(--ink-soft);
+  background: var(--page-shade);
+}
+
+.chip.is-danger {
+  color: var(--red-pen);
+}
+
+.chip.is-danger:hover {
+  border-color: var(--red-pen);
+}
+
+.thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--pencil);
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.thinking-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--highlight);
+  animation: pulse 1.2s var(--ease-out) infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.thinking-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes pulse {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.45;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.chat-skeleton {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.chat-skeleton span {
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, var(--page-shade) 0%, var(--rule) 50%, var(--page-shade) 100%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.chat-skeleton span:first-child {
+  width: 40%;
+  justify-self: end;
+}
+
+.chat-skeleton span:last-child {
+  width: 70%;
+}
+
+.composer-wrap {
+  position: sticky;
+  bottom: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-4);
+}
+
+.composer {
+  display: flex;
+  align-items: end;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius-m) + 6px);
+  box-shadow: 0 10px 30px -12px rgba(14, 34, 41, 0.35);
+}
+
+.composer:focus-within {
+  border-color: var(--ink-soft);
+}
+
+.composer textarea {
+  flex: 1;
+  min-height: 44px;
+  max-height: 168px;
+  padding: 11px var(--space-3);
+  border: 0;
+  resize: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--step-0);
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.composer textarea:focus {
+  outline: none;
+}
+
+.composer textarea::placeholder {
+  color: var(--pencil);
+}
+
+.composer-send {
+  width: 44px;
+  padding: 0;
+  flex: none;
+}
+
+.composer-hint {
+  justify-self: end;
+  font-size: 0.8125rem;
+  color: var(--pencil);
+  padding-right: var(--space-2);
+}
+
+.composer-locked {
+  box-shadow: 0 10px 30px -12px rgba(14, 34, 41, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exchange,
+  .thinking-dots span,
+  .chat-skeleton span {
+    animation: none;
+  }
+}
+
+.chat-end {
+  scroll-margin-bottom: 120px;
+}

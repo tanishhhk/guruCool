@@ -73,6 +73,14 @@ describe("parseInline", () => {
     ]);
   });
 
+  it("moves punctuation that follows a citation in front of it", () => {
+    expect(parseInline("unused leave [S1]. Next")).toEqual([
+      { type: "text", text: "unused leave." },
+      { type: "cite", ids: ["S1"] },
+      { type: "text", text: " Next" },
+    ]);
+  });
+
   it("reads citations with commas and spaces", () => {
     expect(parseInline("x [S1, S3] y")).toEqual([
       { type: "text", text: "x" },

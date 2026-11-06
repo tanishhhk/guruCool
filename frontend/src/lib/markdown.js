@@ -128,5 +128,15 @@ export function parseInline(text) {
     else tokens.push({ type: "em", text: match[4] ?? match[5] });
   }
   pushText(source.slice(at));
-  return tokens;
+
+  // "leave [S1]." reads better as "leave. [S1]": move the punctuation before the chip.
+  for (let i = 1; i < tokens.length - 1; i += 1) {
+    const [before, cite, after] = [tokens[i - 1], tokens[i], tokens[i + 1]];
+    const mark = after.type === "text" && after.text.match(/^[.,;:!?]+/);
+    if (cite.type === "cite" && before.type === "text" && mark) {
+      before.text += mark[0];
+      after.text = after.text.slice(mark[0].length);
+    }
+  }
+  return tokens.filter((token) => token.type !== "text" || token.text);
 }

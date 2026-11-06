@@ -3,7 +3,7 @@ import { Clapperboard, MessageSquareText, MoreHorizontal, Trash2 } from "lucide-
 
 import { api } from "../api";
 import { focusPhrase } from "../lenses";
-import AskPanel from "./AskPanel";
+import ChatPanel from "./ChatPanel";
 import StoryPanel from "./StoryPanel";
 
 const TABS = [
@@ -120,7 +120,7 @@ export default function DocumentView({ document, user, usage, onUsed, onDeleted 
         {tab === "explain" ? (
           <StoryPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} onAsk={() => setTab("chat")} />
         ) : (
-          <AskPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} />
+          <ChatPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} />
         )}
       </section>
     </div>
