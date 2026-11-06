@@ -1,5 +1,6 @@
 import { ArrowRight, Clapperboard, MessageSquareText } from "lucide-react";
 
+import { OutOfCredits } from "../components/Credits";
 import UploadBox from "../components/UploadBox";
 import { firstName } from "../lib/people";
 
@@ -12,7 +13,7 @@ function greeting(now = new Date()) {
 }
 
 // The page with no document open: bring a new one, or pick up an old one.
-export default function Home({ user, items, usage, onReady, onOpen }) {
+export default function Home({ user, items, usage, onReady, onOpen, onPlans }) {
   const name = firstName(user);
   const recent = (items ?? []).filter((item) => item.status === "completed").slice(0, 3);
   const full = usage && usage.documents >= usage.max_documents;
@@ -30,7 +31,7 @@ export default function Home({ user, items, usage, onReady, onOpen }) {
       {full ? (
         <p className="notice">Your shelf is full ({usage.max_documents} documents). Delete one from its page to bring a new one.</p>
       ) : noUploads ? (
-        <p className="notice">You have used today's {usage.limits.upload} uploads. More tomorrow; your shelf is still open below.</p>
+        <OutOfCredits kind="upload" usage={usage} onPlans={onPlans} note="Your shelf is still open." />
       ) : (
         <UploadBox offerSample={!items || items.length === 0} onReady={onReady} />
       )}

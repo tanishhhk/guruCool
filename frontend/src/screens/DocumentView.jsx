@@ -78,7 +78,7 @@ function DeleteMenu({ document, onDeleted }) {
 }
 
 // One document: its video explanation first, its chat second.
-export default function DocumentView({ document, user, usage, onUsed, onDeleted }) {
+export default function DocumentView({ document, user, usage, onUsed, onDeleted, onPlans }) {
   const [tab, setTab] = useState("explain");
 
   return (
@@ -118,9 +118,9 @@ export default function DocumentView({ document, user, usage, onUsed, onDeleted 
 
       <section className="doc-body" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "explain" ? (
-          <ExplainPanel document={document} user={user} usage={usage} onUsed={onUsed} onAsk={() => setTab("chat")} />
+          <ExplainPanel document={document} user={user} usage={usage} onUsed={onUsed} onPlans={onPlans} onAsk={() => setTab("chat")} />
         ) : (
-          <ChatPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} />
+          <ChatPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} onPlans={onPlans} />
         )}
       </section>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Clapperboard, Compass, LogOut, MessageSquareText, Plus, Search, UserRound } from "lucide-react";
 
+import { CreditsMeter } from "./Credits";
 import { Logo } from "./Logo";
 import { displayName, initialOf } from "../lib/people";
 import { groupByRecency, spineTone } from "../lib/shelf";
@@ -108,17 +109,7 @@ function AccountMenu({ user, onProfile, onTour, onSignOut }) {
   );
 }
 
-function UsageSummary({ usage }) {
-  if (!usage) return null;
-  const left = (kind) => Math.max(0, usage.limits[kind] - usage.used[kind]);
-  return (
-    <p className="shelf-usage" title="Daily limits reset at midnight UTC">
-      Today: {left("question")} questions, {left("story")} videos, {left("upload")} uploads left
-    </p>
-  );
-}
-
-export default function Shelf({ user, items, currentId, usage, onHome, onOpen, onProfile, onTour, onSignOut }) {
+export default function Shelf({ user, items, currentId, usage, onHome, onOpen, onProfile, onPlans, onTour, onSignOut }) {
   const [query, setQuery] = useState("");
   const groups = useMemo(() => {
     const wanted = query.trim().toLowerCase();
@@ -170,7 +161,7 @@ export default function Shelf({ user, items, currentId, usage, onHome, onOpen, o
       </div>
 
       <footer className="shelf-foot">
-        <UsageSummary usage={usage} />
+        <CreditsMeter usage={usage} onPlans={onPlans} />
         <AccountMenu user={user} onProfile={onProfile} onTour={onTour} onSignOut={onSignOut} />
       </footer>
     </nav>

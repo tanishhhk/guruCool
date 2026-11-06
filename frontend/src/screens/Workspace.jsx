@@ -8,6 +8,7 @@ import WelcomeTour from "../components/WelcomeTour";
 import { tourSeen } from "../lib/tour";
 import DocumentView from "./DocumentView";
 import Home from "./Home";
+import Plans from "./Plans";
 import Profile from "./Profile";
 
 // The signed-in app: the shelf of documents on the left, the open page on the right.
@@ -50,6 +51,10 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
     setView("home");
     setDrawer(false);
   };
+  const showPlans = () => {
+    setView("plans");
+    setDrawer(false);
+  };
   const removed = (id) => {
     setItems((previous) => previous?.filter((item) => item.id !== id) ?? previous);
     refreshUsage();
@@ -85,6 +90,7 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
             setView("settings");
             setDrawer(false);
           }}
+          onPlans={showPlans}
           onTour={() => {
             setTour(true);
             setDrawer(false);
@@ -95,10 +101,11 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
       {drawer && <button type="button" className="shelf-scrim" aria-label="Close your documents" onClick={() => setDrawer(false)} />}
 
       <main className="page-area">
-        {view === "home" && <Home user={user} items={items} usage={usage} onReady={(document) => { onUsed(); open(document); }} onOpen={open} />}
+        {view === "home" && <Home user={user} items={items} usage={usage} onPlans={showPlans} onReady={(document) => { onUsed(); open(document); }} onOpen={open} />}
+        {view === "plans" && <Plans usage={usage} />}
         {view === "settings" && <Profile user={user} usage={usage} onUser={onUser} onSignOut={onSignOut} />}
         {view === "document" && current && (
-          <DocumentView key={current.id} document={current} user={user} usage={usage} onUsed={onUsed} onDeleted={removed} />
+          <DocumentView key={current.id} document={current} user={user} usage={usage} onUsed={onUsed} onDeleted={removed} onPlans={showPlans} />
         )}
       </main>
 

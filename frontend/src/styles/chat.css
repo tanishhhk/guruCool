@@ -246,3 +246,8 @@
 .chat-end {
   scroll-margin-bottom: 120px;
 }
+
+.chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -3,6 +3,7 @@ import { ArrowUp, Check, Copy, FileText, Lightbulb, Sparkles, Trash2 } from "luc
 
 import { api } from "../api";
 import AnswerText from "../components/AnswerText";
+import { OutOfCredits } from "../components/Credits";
 import Excerpt from "../components/Excerpt";
 import { DEFAULT_QUESTIONS, FOCUS } from "../lenses";
 
@@ -90,7 +91,7 @@ function Answer({ turn, onFollowUp, busy }) {
   );
 }
 
-export default function ChatPanel({ document, focus, usage, onUsed }) {
+export default function ChatPanel({ document, focus, usage, onUsed, onPlans }) {
   const [turns, setTurns] = useState(null);
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
@@ -218,9 +219,7 @@ export default function ChatPanel({ document, focus, usage, onUsed }) {
 
       <div className="composer-wrap">
         {locked ? (
-          <p className="notice composer-locked" role="status">
-            You have used today's {usage.limits.question} questions. They come back at midnight UTC; your chat stays here.
-          </p>
+          <OutOfCredits kind="question" usage={usage} onPlans={onPlans} note="Your chat stays here." />
         ) : (
           <form
             className="composer"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Download, Lock, MessageSquareText, Play, RotateCcw } from "lucide-react";
 
 import { api, wait } from "../api";
+import { OutOfCredits } from "../components/Credits";
 import { Mark } from "../components/Logo";
 import { FOCUS } from "../lenses";
 import { parseUtc } from "../lib/shelf";
@@ -59,7 +60,7 @@ function Making({ job }) {
   );
 }
 
-export default function ExplainPanel({ document, user, usage, onUsed, onAsk }) {
+export default function ExplainPanel({ document, user, usage, onUsed, onAsk, onPlans }) {
   const focus = user.focus;
   const [style, setStyle] = useState(user.story_style || (focus ? FOCUS[focus].strictness : "exam"));
   const [depth, setDepth] = useState(user.story_depth && user.story_depth !== "deep" ? user.story_depth : "overview");
@@ -203,7 +204,7 @@ export default function ExplainPanel({ document, user, usage, onUsed, onAsk }) {
             <h2>{hasStory ? "Make a new video of this document" : "See this document explained"}</h2>
             <p>A narrated video that walks you through what matters, told from the document itself.</p>
             {outOfVideos ? (
-              <p className="screen-locked">You have used today's {usage.limits.story} video credits. More at midnight UTC.</p>
+              <OutOfCredits kind="story" usage={usage} onPlans={onPlans} note="Your earlier videos still play." />
             ) : tooDear ? (
               <p className="screen-locked">This length needs {cost} credits and {left} {left === 1 ? "is" : "are"} left today. Choose a shorter one.</p>
             ) : (

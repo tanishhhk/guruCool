@@ -224,12 +224,6 @@
   border-top: 1px solid var(--ink-2);
 }
 
-.shelf-usage {
-  font-size: 0.8125rem;
-  color: var(--ink-soft);
-  padding: 0 var(--space-2);
-}
-
 .account {
   position: relative;
 }
