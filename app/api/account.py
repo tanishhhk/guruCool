@@ -14,7 +14,7 @@ from app.models.upload_idempotency import UploadIdempotency
 from app.models.usage import UsageCounter
 from app.models.user import User
 from app.models.video_job import VideoJob
-from app.schemas.account import AccountDeletion, AccountResponse, NameUpdate, PasswordChange
+from app.schemas.account import AccountDeletion, AccountResponse, NameUpdate, PasswordChange, StoryPreferences
 from app.services import video_jobs
 from app.services.auth import get_password_hash, issue_token, verify_password
 
@@ -36,7 +36,11 @@ def account_view(user: User) -> dict:
         "focus": user.focus,
         "plan": user.plan or "free",
         "created_at": user.created_at,
-        "story_preferences": {},
+        "story_preferences": {
+            "voice": user.story_voice,
+            "depth": user.story_depth,
+            "style": user.story_style,
+        },
     }
 
 
@@ -61,6 +65,17 @@ def get_account(current_user: User = Depends(get_current_user)):
 @router.patch("", response_model=AccountResponse)
 def rename(body: NameUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     current_user.display_name = body.display_name
+    db.commit()
+    db.refresh(current_user)
+    return account_view(current_user)
+
+
+@router.put("/story-preferences", response_model=AccountResponse)
+def story_preferences(
+    body: StoryPreferences, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    """The voice, length and telling that new videos start with."""
+    current_user.story_voice, current_user.story_depth, current_user.story_style = body.voice, body.depth, body.style
     db.commit()
     db.refresh(current_user)
     return account_view(current_user)

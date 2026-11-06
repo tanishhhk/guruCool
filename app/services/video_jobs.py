@@ -23,6 +23,7 @@ from app.models.user import User
 from app.models.video_job import VideoJob
 from app.services.story import sample_passages, write_story
 from app.services.video_render import render_story_video
+from app.services.voices import tts_name
 from app.utils.isolated import IsolationTimeout, run_isolated
 
 logger = logging.getLogger(__name__)
@@ -127,19 +128,20 @@ def _load(session_factory, job_id: str):
             "user_id": job.user_id,
             "strictness": job.strictness,
             "depth": job.depth,
+            "voice": job.voice,
             "focus": owner.focus if owner else None,
             "filename": document.filename if document else "",
             "chunks": [tuple(row) for row in chunks],
         }
 
 
-def _render(job_id: str, title: str, scenes) -> tuple[str, str | None]:
+def _render(job_id: str, title: str, scenes, voice: str | None = None) -> tuple[str, str | None]:
     """Render the video. Returns (video_status, path) where status is ready or an error key."""
     out_dir = job_dir(job_id)
     out_dir.mkdir(parents=True, exist_ok=True)
     try:
         path = run_isolated(
-            render_story_video, title, list(scenes), str(out_dir), settings.tts_voice,
+            render_story_video, title, list(scenes), str(out_dir), tts_name(voice, settings.tts_voice),
             timeout=settings.video_render_timeout_seconds,
             memory_limit_bytes=settings.video_render_memory_mb * 1024 * 1024,
         )
@@ -203,7 +205,7 @@ def process_job(session_factory, job_id: str, token: str) -> None:
         ):
             return  # Deleted with its document while the story was being written.
 
-        video_status, path = _render(job_id, story.title, story.scenes)
+        video_status, path = _render(job_id, story.title, story.scenes, job["voice"])
         finished = _update(
             session_factory, job_id, token,
             {

@@ -21,6 +21,7 @@ class VideoJob(Base):
     user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     strictness = Column(String(20), nullable=False)
     depth = Column(String(20), nullable=False)
+    voice = Column(String(20), nullable=True)  # see app.services.voices; null means TTS_VOICE
 
     # queued -> running -> completed | failed
     status = Column(String(20), nullable=False, default="queued")

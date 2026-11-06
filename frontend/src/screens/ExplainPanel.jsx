@@ -1,23 +1,27 @@
 import { useEffect, useState } from "react";
-import { Check, Download, MessageSquareText, Play, RotateCcw } from "lucide-react";
+import { Check, Download, Lock, MessageSquareText, Play, RotateCcw } from "lucide-react";
 
 import { api, wait } from "../api";
 import { Mark } from "../components/Logo";
 import { FOCUS } from "../lenses";
 import { parseUtc } from "../lib/shelf";
 import { STEPS, stepOf, creep } from "../lib/videoSteps";
+import { LENGTHS, VOICES, voiceName } from "../lib/voices";
 
 const ACTIVE = ["queued", "running"];
-const LENGTHS = { overview: "Short, about 2 minutes", detailed: "Detailed, about 4 minutes" };
 
-function Options({ value, onChange, options, label }) {
+// options: [id, title, line, note, disabled]
+function Options({ value, onChange, options, label, wide = false }) {
   return (
-    <fieldset className="segmented">
+    <fieldset className={`segmented${wide ? " segmented-wide" : ""}`}>
       <legend>{label}</legend>
-      {options.map(([id, title, line]) => (
-        <label key={id} className={value === id ? "is-selected" : ""}>
-          <input type="radio" name={label} value={id} checked={value === id} onChange={() => onChange(id)} />
-          <span className="segmented-title">{title}</span>
+      {options.map(([id, title, line, note, disabled]) => (
+        <label key={id} className={`${value === id ? "is-selected" : ""}${disabled ? " is-disabled" : ""}`}>
+          <input type="radio" name={label} value={id} checked={value === id} disabled={disabled} onChange={() => onChange(id)} />
+          <span className="segmented-title">
+            {title}
+            {note && <span className="segmented-note">{disabled && <Lock size={12} strokeWidth={2} aria-hidden="true" />}{note}</span>}
+          </span>
           <span className="segmented-line">{line}</span>
         </label>
       ))}
@@ -55,9 +59,11 @@ function Making({ job }) {
   );
 }
 
-export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) {
-  const [style, setStyle] = useState(focus ? FOCUS[focus].strictness : "exam");
-  const [depth, setDepth] = useState("overview");
+export default function ExplainPanel({ document, user, usage, onUsed, onAsk }) {
+  const focus = user.focus;
+  const [style, setStyle] = useState(user.story_style || (focus ? FOCUS[focus].strictness : "exam"));
+  const [depth, setDepth] = useState(user.story_depth && user.story_depth !== "deep" ? user.story_depth : "overview");
+  const [voice, setVoice] = useState(user.story_voice || "aria");
   const [stories, setStories] = useState(null);
   const [job, setJob] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
@@ -133,7 +139,7 @@ export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) 
     setChoosing(false);
     try {
       setVideoUrl(null);
-      const created = await api(`/videos/generate/${document.id}`, { method: "POST", body: { strictness: style, depth } });
+      const created = await api(`/videos/generate/${document.id}`, { method: "POST", body: { strictness: style, depth, voice } });
       setJob(created);
       setStories((previous) => [created, ...(previous ?? []).filter((story) => story.id !== created.id)]);
     } catch (failure) {
@@ -151,6 +157,15 @@ export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) 
   const making = job && (ACTIVE.includes(job.status) || job.video_status === "rendering");
   const hasStory = job?.scenes?.length > 0;
   const outOfVideos = left === 0;
+  const costs = usage?.story_costs ?? { overview: 1, detailed: 2, deep: 3 };
+  const allowed = usage?.story_depths ?? ["overview", "detailed"];
+  const cost = costs[depth] ?? 1;
+  const tooDear = left !== null && cost > left;
+  const lengthOptions = LENGTHS.map(([id, title, line]) => {
+    const locked = !allowed.includes(id);
+    const credits = `${costs[id]} ${costs[id] === 1 ? "credit" : "credits"}`;
+    return [id, title, line, locked ? "Plus" : credits, locked || (left !== null && costs[id] > left)];
+  });
 
   const setup = (
     <div className="explain-setup">
@@ -163,15 +178,15 @@ export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) 
           ["strict", "Stick to the facts", "Only what the document says"],
         ]}
       />
+      <Options label="How long?" value={depth} onChange={setDepth} options={lengthOptions} wide />
       <Options
-        label="How long?"
-        value={depth}
-        onChange={setDepth}
-        options={[
-          ["overview", "Short", "About 2 minutes"],
-          ["detailed", "Detailed", "About 4 minutes"],
-        ]}
+        label="Whose voice?"
+        value={voice}
+        onChange={setVoice}
+        options={VOICES.map(([id, name, accent]) => [id, name, accent])}
+        wide
       />
+      {left !== null && <p className="explain-credits">{left} video {left === 1 ? "credit" : "credits"} left today.</p>}
     </div>
   );
 
@@ -188,14 +203,18 @@ export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) 
             <h2>{hasStory ? "Make a new video of this document" : "See this document explained"}</h2>
             <p>A narrated video that walks you through what matters, told from the document itself.</p>
             {outOfVideos ? (
-              <p className="screen-locked">You have used today's {usage.limits.story} videos. More at midnight UTC.</p>
+              <p className="screen-locked">You have used today's {usage.limits.story} video credits. More at midnight UTC.</p>
+            ) : tooDear ? (
+              <p className="screen-locked">This length needs {cost} credits and {left} {left === 1 ? "is" : "are"} left today. Choose a shorter one.</p>
             ) : (
               <button type="button" className="button button-primary screen-play" onClick={start}>
                 <Play size={20} strokeWidth={2} aria-hidden="true" /> Make my video
               </button>
             )}
             <button type="button" className="screen-choose" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>
-              {choosing ? "Hide the options" : `${LENGTHS[depth]}, ${style === "strict" ? "facts only" : "explained simply"}. Change`}
+              {choosing
+                ? "Hide the options"
+                : `${LENGTHS.find(([id]) => id === depth)[1]}, ${style === "strict" ? "facts only" : "explained simply"}, read by ${voiceName(voice)}. Change`}
             </button>
           </div>
         )}
@@ -224,7 +243,7 @@ export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) 
       {videoUrl && choosing && (
         <>
           {setup}
-          <button type="button" className="button button-primary explain-go" onClick={start}>
+          <button type="button" className="button button-primary explain-go" onClick={start} disabled={tooDear}>
             <Play size={18} strokeWidth={2} aria-hidden="true" /> Make this version
           </button>
         </>
@@ -250,7 +269,10 @@ export default function ExplainPanel({ document, focus, usage, onUsed, onAsk }) 
             {stories.map((story) => (
               <li key={story.id}>
                 <button type="button" className={`version${story.id === job?.id ? " is-current" : ""}`} onClick={() => openStory(story)}>
-                  <span>{story.depth === "detailed" ? "Detailed" : "Short"}, {story.strictness === "strict" ? "facts only" : "explained simply"}</span>
+                  <span>
+                    {LENGTHS.find(([id]) => id === story.depth)?.[1] ?? "Short"}, {story.strictness === "strict" ? "facts only" : "explained simply"}
+                    {story.voice ? `, ${voiceName(story.voice)}` : ""}
+                  </span>
                   <span className="folio">
                     {parseUtc(story.created_at)?.toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
                   </span>

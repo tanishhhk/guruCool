@@ -4,6 +4,7 @@ import { BadgeCheck, LogOut, ShieldAlert } from "lucide-react";
 import { api, session } from "../api";
 import { FOCUS, PROFESSIONS, professionOf } from "../lenses";
 import { displayName, initialOf } from "../lib/people";
+import { LENGTHS, VOICES } from "../lib/voices";
 
 function Saved({ state }) {
   if (!state) return null;
@@ -179,6 +180,67 @@ function Reading({ user, onUser }) {
   );
 }
 
+function VideoDefaults({ account, usage, onUser }) {
+  const saved = account.story_preferences || {};
+  const [voice, setVoice] = useState(saved.voice || "aria");
+  const [depth, setDepth] = useState(saved.depth || "overview");
+  const [style, setStyle] = useState(saved.style || "exam");
+  const [state, setState] = useState("");
+  const allowed = usage?.story_depths ?? ["overview", "detailed"];
+
+  const save = async (event) => {
+    event.preventDefault();
+    setState("saving");
+    try {
+      const next = await api("/account/story-preferences", { method: "PUT", body: { voice, depth, style } });
+      onUser({ story_preferences: next.story_preferences, story_voice: voice, story_depth: depth, story_style: style });
+      setState("saved");
+    } catch (error) {
+      setState(error.message);
+    }
+  };
+  const edit = (setter) => (event) => {
+    setter(event.target.value);
+    setState("");
+  };
+
+  return (
+    <section className="profile-section" aria-labelledby="video-heading">
+      <h2 id="video-heading">Your videos</h2>
+      <p className="profile-note">New videos start with these choices. You can still change them for each video.</p>
+      <form className="settings-form" onSubmit={save}>
+        <div className="field">
+          <label htmlFor="pref-voice">Voice</label>
+          <select id="pref-voice" className="input" value={voice} onChange={edit(setVoice)}>
+            {VOICES.map(([id, name, accent]) => <option key={id} value={id}>{name}, {accent}</option>)}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="pref-depth">Length</label>
+          <select id="pref-depth" className="input" value={depth} onChange={edit(setDepth)}>
+            {LENGTHS.map(([id, title, line]) => (
+              <option key={id} value={id} disabled={!allowed.includes(id)}>
+                {title}, {line.toLowerCase()}{allowed.includes(id) ? "" : " (Plus)"}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="pref-style">Telling</label>
+          <select id="pref-style" className="input" value={style} onChange={edit(setStyle)}>
+            <option value="exam">Explain it simply</option>
+            <option value="strict">Stick to the facts</option>
+          </select>
+        </div>
+        <div className="settings-actions">
+          <button type="submit" className="button button-quiet" disabled={state === "saving"}>Save video defaults</button>
+          <Saved state={state} />
+        </div>
+      </form>
+    </section>
+  );
+}
+
 function DangerZone({ account, onSignOut }) {
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
@@ -257,6 +319,7 @@ export default function Profile({ user, usage, onUser, onSignOut }) {
               </p>
             </section>
           )}
+          <VideoDefaults account={account} usage={usage} onUser={updated} />
           <Security account={account} />
           <Reading user={user} onUser={onUser} />
           <DangerZone account={account} onSignOut={onSignOut} />

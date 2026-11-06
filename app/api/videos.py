@@ -14,6 +14,7 @@ from app.models.user import User
 from app.models.video_job import VideoJob
 from app.schemas.video import VideoJobDetail, VideoJobResponse, VideoRequest
 from app.services import ingestion, plans, usage, video_jobs
+from app.services.voices import VOICES
 
 router = APIRouter()
 
@@ -63,7 +64,9 @@ def generate_story(
         .first()
     )
     if active is not None:
-        if (active.document_id, active.strictness, active.depth) == (document_id, body.strictness, body.depth):
+        if (active.document_id, active.strictness, active.depth, active.voice) == (
+            document_id, body.strictness, body.depth, body.voice
+        ):
             return active
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -85,6 +88,7 @@ def generate_story(
         user_id=current_user.id,
         strictness=body.strictness,
         depth=body.depth,
+        voice=body.voice,
         status=video_jobs.QUEUED,
         stage="queued",
         progress=0,
@@ -96,6 +100,12 @@ def generate_story(
     if worker is not None:
         worker.wake()
     return job
+
+
+@router.get("/voices")
+def list_voices(current_user: User = Depends(get_current_user)):
+    """The narration voices a video can use."""
+    return [{"id": voice_id, "label": label} for voice_id, (_name, label) in VOICES.items()]
 
 
 @router.get("", response_model=list[VideoJobResponse])

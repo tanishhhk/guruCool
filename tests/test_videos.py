@@ -415,3 +415,61 @@ def test_fallback_quotes_never_run_a_heading_into_a_sentence():
     assert "Remote work Employees" not in joined
     assert "Employees in eligible roles may work remotely" in joined
     assert joined.count("Around page 2") <= 1
+
+
+# Voices and story preferences
+
+
+def test_unknown_voice_is_rejected(world):
+    assert _start(world, voice="robot").status_code == 422
+
+
+def test_job_records_voice_and_render_uses_it(world, monkeypatch):
+    monkeypatch.setattr(settings, "video_render_enabled", True)
+    voices = []
+
+    def run_isolated(_func, _title, _scenes, out_dir, voice, **_limits):
+        voices.append(voice)
+        path = os.path.join(out_dir, "video.mp4")
+        with open(path, "wb") as handle:
+            handle.write(b"fake mp4")
+        return path
+
+    monkeypatch.setattr(video_jobs, "run_isolated", run_isolated)
+    started = _start(world, voice="neerja")
+    assert started.json()["voice"] == "neerja"
+    _run(world)
+    assert voices == ["en-IN-NeerjaNeural"]
+
+
+def test_a_job_without_a_voice_uses_the_configured_one(world, monkeypatch):
+    monkeypatch.setattr(settings, "video_render_enabled", True)
+    voices = []
+
+    def run_isolated(_func, _title, _scenes, out_dir, voice, **_limits):
+        voices.append(voice)
+        raise ValueError("render")
+
+    monkeypatch.setattr(video_jobs, "run_isolated", run_isolated)
+    _start(world)
+    _run(world)
+    assert voices == [settings.tts_voice]
+
+
+def test_preferences_round_trip(world):
+    client, owner = world["client"], world["owner"]
+    saved = client.put("/account/story-preferences", headers=owner,
+                       json={"voice": "prabhat", "depth": "detailed", "style": "strict"})
+    assert saved.status_code == 200
+    assert client.get("/account", headers=owner).json()["story_preferences"] == {
+        "voice": "prabhat", "depth": "detailed", "style": "strict",
+    }
+    assert client.put("/account/story-preferences", headers=owner,
+                      json={"voice": "robot", "depth": "detailed", "style": "strict"}).status_code == 422
+    assert client.put("/account/story-preferences", headers=owner,
+                      json={"voice": "aria", "depth": "forever", "style": "strict"}).status_code == 422
+
+
+def test_voices_are_listed(world):
+    listed = world["client"].get("/videos/voices", headers=world["owner"]).json()
+    assert {"id": "neerja", "label": "Neerja, Indian"} in listed

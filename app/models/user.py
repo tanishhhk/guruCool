@@ -23,6 +23,10 @@ class User(Base):
     token_version = Column(Integer, nullable=False, default=0, server_default="0")
     # free, plus or pro; see app.services.plans. Set by hand until payments exist.
     plan = Column(String(20), nullable=False, default="free", server_default="free")
+    # Defaults for new videos, chosen in the profile.
+    story_voice = Column(String(20), nullable=True)
+    story_depth = Column(String(20), nullable=True)
+    story_style = Column(String(20), nullable=True)
 
     def __repr__(self):
         return f"<User {self.id}>"

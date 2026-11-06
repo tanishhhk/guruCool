@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.user import _validate_bcrypt_password_bytes
+from app.services.voices import VOICES
 
 
 class AccountResponse(BaseModel):
@@ -45,6 +46,21 @@ class PasswordChange(BaseModel):
     @classmethod
     def fits_bcrypt(cls, value: str) -> str:
         return _validate_bcrypt_password_bytes(value)
+
+
+class StoryPreferences(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    voice: str
+    depth: Literal["overview", "detailed", "deep"]
+    style: Literal["strict", "exam"]
+
+    @field_validator("voice")
+    @classmethod
+    def known_voice(cls, value: str) -> str:
+        if value not in VOICES:
+            raise ValueError("Choose one of the listed voices.")
+        return value
 
 
 class AccountDeletion(BaseModel):

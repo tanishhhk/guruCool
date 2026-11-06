@@ -118,7 +118,7 @@ export default function DocumentView({ document, user, usage, onUsed, onDeleted 
 
       <section className="doc-body" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "explain" ? (
-          <ExplainPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} onAsk={() => setTab("chat")} />
+          <ExplainPanel document={document} user={user} usage={usage} onUsed={onUsed} onAsk={() => setTab("chat")} />
         ) : (
           <ChatPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} />
         )}

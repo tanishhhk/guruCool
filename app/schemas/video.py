@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.services.voices import VOICES
+
 
 class VideoRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -12,6 +14,14 @@ class VideoRequest(BaseModel):
     strictness: Literal["strict", "exam"] = "strict"
     # overview: about 250 words. detailed: about 600. deep: about 1,100 (Plus and Pro).
     depth: Literal["overview", "detailed", "deep"] = "overview"
+    voice: str = Field(default="aria", max_length=20)
+
+    @field_validator("voice")
+    @classmethod
+    def known_voice(cls, value: str) -> str:
+        if value not in VOICES:
+            raise ValueError(f"Choose one of these voices: {', '.join(VOICES)}.")
+        return value
 
 
 class StoryScene(BaseModel):
@@ -26,6 +36,7 @@ class VideoJobResponse(BaseModel):
     document_id: str
     strictness: str
     depth: str
+    voice: str | None = None
     status: str
     stage: str
     progress: int

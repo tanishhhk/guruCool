@@ -72,6 +72,11 @@ class UserResponse(BaseModel):
     created_at: datetime
     profession: str | None = None
     focus: str | None = None
+    display_name: str | None = None
+    plan: str = "free"
+    story_voice: str | None = None
+    story_depth: str | None = None
+    story_style: str | None = None
 
 
 class ProfileUpdate(BaseModel):
