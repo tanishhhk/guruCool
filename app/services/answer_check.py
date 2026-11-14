@@ -19,7 +19,8 @@ COPY_RUN_WORDS = 10
 
 _CITATION = re.compile(r"[\[【［]\s*S\d{1,3}[^\]】］]*[\]】］]")
 _LIST_MARKER = re.compile(r"(?m)^\s*(?:\d{1,2}[.)]|[-*•])\s+")
-_NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
+# A number not glued to letters: "Q4", "H1" and "S2" are labels, not figures.
+_NUMBER = re.compile(r"(?<![A-Za-z\d.,])\d+(?:[.,]\d+)*(?![A-Za-z])")
 _WORD = re.compile(r"[a-z0-9]+(?:'[a-z]+)?")
 
 
@@ -41,12 +42,15 @@ def _words(text: str) -> list[str]:
 
 
 def _figures(text: str) -> set[str]:
-    """Numbers as written, with thousands separators removed: "4,820" and "4820" match."""
+    """Numbers by value as written: "4,820" matches "4820", and "22.0" matches "22"."""
     found = set()
     for raw in _NUMBER.findall(text):
         if re.fullmatch(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?", raw):
             raw = raw.replace(",", "")
-        found.add(raw.replace(",", "."))
+        value = raw.replace(",", ".")
+        if "." in value:
+            value = value.rstrip("0").rstrip(".")
+        found.add(value)
     return found
 
 

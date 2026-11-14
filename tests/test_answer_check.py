@@ -113,3 +113,10 @@ def test_a_failed_rewrite_keeps_the_draft(drafts):
 
 def test_the_model_is_told_to_check_before_writing():
     assert "Check every point you plan to make against the sources" in llm.SYSTEM_INSTRUCTION
+
+
+def test_labels_and_trailing_zeros_are_not_false_alarms():
+    sources = [RetrievedChunk("S1", 0, "The margin was 22.0 percent in the fourth quarter of 2026.", 1, 1, 0.9)]
+    answer = "Q4 margin was 22 % in 2026. [S1]"
+    assert answer_check.review(answer, sources, "How was Q4?") == []
+    assert [p.kind for p in answer_check.review("Q4 margin was 23 %. [S1]", sources)] == ["figures"]
