@@ -1,0 +1,267 @@
+/* Home: the desk greets you across the top, the paper below holds the work.
+   The band runs edge to edge of the page area; content keeps the 820px measure. */
+.home {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.home-band {
+  --robe: #d98a3d;
+  --robe-shade: #b96a28;
+  --skin: #b97a52;
+  --beard: #f3ede4;
+  --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  margin: calc(var(--area-top) * -1) calc(var(--area-x) * -1) 0;
+  padding: clamp(var(--space-6), 5vw, var(--space-8)) var(--area-x) 0;
+  background: radial-gradient(60% 120% at 82% 100%, var(--ink-3) 0%, var(--ink-2) 38%, var(--ink) 78%);
+  color: var(--paper);
+  overflow: hidden;
+}
+
+.home-band-inner {
+  max-width: 820px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-5);
+}
+
+.home-hello {
+  display: grid;
+  gap: var(--space-4);
+  align-content: end;
+  padding-bottom: clamp(var(--space-6), 4vw, var(--space-7));
+}
+
+.home-hello h1 {
+  font-size: var(--step-4);
+  text-wrap: balance;
+  color: var(--paper);
+  animation: home-arrive 700ms var(--ease-out) both;
+}
+
+.home-follow {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: var(--step-2);
+  font-style: italic;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* The one authored moment: the greeting settles onto the desk. */
+@keyframes home-arrive {
+  from {
+    transform: translateY(12px);
+    clip-path: inset(0 0 35% 0);
+  }
+
+  to {
+    clip-path: inset(0 0 -10% 0);
+  }
+}
+
+.home-lede {
+  max-width: 52ch;
+  color: var(--ink-soft);
+  font-size: var(--step-1);
+  line-height: 1.6;
+}
+
+/* The guru's tip: his speech bubble, pointing across to him. */
+.home-band .gc-speech {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  top: auto;
+  translate: none;
+  justify-self: start;
+  width: auto;
+  max-width: 34rem;
+  margin-top: var(--space-2);
+  padding: 12px 18px;
+  color: var(--ink);
+  text-align: left;
+  font-size: 1.0625rem;
+}
+
+.home-band .gc-speech::after {
+  left: auto;
+  right: -6px;
+  bottom: auto;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* He peeks over the edge of the paper. */
+.home-guru {
+  align-self: end;
+  width: clamp(150px, 20vw, 230px);
+  margin-bottom: -4px;
+}
+
+.home-band .gc-guru {
+  position: static;
+  inset: auto;
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+/* Name, asked on the desk. */
+.home-name {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 30rem;
+  margin-top: var(--space-2);
+}
+
+.home-name label {
+  font-weight: 700;
+  font-size: var(--step--1);
+  color: var(--paper);
+}
+
+.home-name-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.home-name-row .input {
+  flex: 1;
+  border-color: var(--ink-3);
+}
+
+.home-name-error {
+  color: #ff9c8f;
+}
+
+.home-body {
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  display: grid;
+  gap: var(--space-6);
+}
+
+.home-recent h2 {
+  font-size: var(--step-2);
+  margin-bottom: var(--space-3);
+}
+
+.home-recent ul {
+  list-style: none;
+}
+
+.recent-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-4);
+  align-items: center;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--rule);
+  text-align: left;
+}
+
+.recent-name {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 600;
+  justify-self: start;
+}
+
+.recent-row:hover .recent-name {
+  background: linear-gradient(var(--highlight-soft), var(--highlight-soft)) no-repeat 0 85% / 100% 40%;
+}
+
+.recent-line {
+  grid-column: 1;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  color: var(--pencil);
+  min-width: 0;
+}
+
+.recent-line span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recent-go {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--pencil);
+  transition: transform 200ms var(--ease-out), color 200ms;
+}
+
+.recent-row:hover .recent-go {
+  color: var(--ink);
+  transform: translateX(4px);
+}
+
+/* Phones: the guru moves to the top corner beside the greeting. */
+@media (max-width: 900px) {
+  .home-band {
+    padding-top: var(--space-5);
+  }
+
+  .home-band-inner {
+    position: relative;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-hello {
+    padding-bottom: var(--space-5);
+  }
+
+  .home-hello h1 {
+    font-size: var(--step-3);
+    padding-right: 92px;
+    min-height: 84px;
+  }
+
+  .home-lede {
+    font-size: var(--step-0);
+  }
+
+  .home-band .gc-speech {
+    font-size: 0.9375rem;
+  }
+
+  .home-band .gc-speech::after {
+    display: none;
+  }
+
+  .home-guru {
+    position: absolute;
+    top: -6px;
+    right: 0;
+    width: 84px;
+    margin: 0;
+  }
+
+  .home-guru .gc-guru {
+    border-radius: 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hello h1 {
+    animation: none;
+  }
+
+  .recent-go {
+    transition: none;
+  }
+}
+
+/* On the home desk only his warm halo stays; the rings belong to the full-size guru. */
+.home-band .gc-ring {
+  display: none;
+}

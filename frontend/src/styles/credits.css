@@ -155,3 +155,10 @@
     transition: none;
   }
 }
+
+/* A plan's small print, such as "Just exploring: no videos", under its label. */
+.credits-note {
+  margin-top: calc(var(--space-1) * -1);
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}

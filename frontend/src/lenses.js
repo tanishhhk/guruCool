@@ -1,13 +1,13 @@
 // Professions and focus options. IDs match app/services/lenses.py on the API.
 
 export const PROFESSIONS = [
-  { id: "student", label: "Student", line: "Revising for exams or writing a thesis", focuses: ["exam", "research"] },
-  { id: "professor", label: "Professor", line: "Researching, or preparing lectures", focuses: ["research", "teaching"] },
+  { id: "student", label: "Student", line: "Revising for exams or writing a thesis", focuses: ["exam", "research", "explore"] },
+  { id: "professor", label: "Professor", line: "Researching, or preparing lectures", focuses: ["research", "teaching", "explore"] },
   {
     id: "employee",
     label: "Working professional",
     line: "Contracts, reports, specs and policies",
-    focuses: ["legal", "finance", "engineering", "general"],
+    focuses: ["legal", "finance", "engineering", "general", "explore"],
   },
 ];
 
@@ -55,7 +55,19 @@ export const FOCUS = {
     strictness: "exam",
     questions: ["Summarise this in five lines", "What do I need to do?", "What are the important dates?"],
   },
+  explore: {
+    label: "Just exploring",
+    line: "A free hand to look around, with smaller daily limits and no videos",
+    strictness: "strict",
+    questions: ["What is this document about?", "What are the most interesting points?", "Summarise this in five lines"],
+  },
 };
+
+// "Just exploring" is the free hand: every profession can pick it.
+export const EXPLORE = "explore";
+
+// Explorers have no video lengths on their plan; the API decides, the usage response says.
+export const videosLocked = (usage) => Boolean(usage) && usage.story_depths?.length === 0;
 
 export const DEFAULT_QUESTIONS = FOCUS.general.questions;
 

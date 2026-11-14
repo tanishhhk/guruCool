@@ -22,10 +22,11 @@ def client(db_session_factory, monkeypatch, tmp_path):
     return TestClient(app)
 
 
-def _user(factory, plan="free"):
+def _user(factory, plan="free", focus=None):
     with factory() as db:
         user = User(id=str(uuid.uuid4()), email=f"u{uuid.uuid4().hex[:8]}@example.com",
-                    hashed_password=get_password_hash("Password-123456"), plan=plan)
+                    hashed_password=get_password_hash("Password-123456"), plan=plan,
+                    profession="student" if focus else None, focus=focus)
         db.add(user)
         db.commit()
         token = create_access_token({"sub": user.id, "user_id": user.id})
@@ -121,3 +122,44 @@ def test_plans_endpoint_lists_three(db_session_factory, client):
     assert [plan["id"] for plan in listed] == ["free", "plus", "pro"]
     assert listed[0]["daily"]["question"] == settings.daily_questions_per_user
     assert plans.STORY_COST["deep"] == 3
+
+
+def test_explorers_get_smaller_limits_and_a_note(db_session_factory, client):
+    _user_id, headers = _user(db_session_factory, focus="explore")
+    body = client.get("/auth/me/usage", headers=headers).json()
+    assert body["limits"] == plans.EXPLORE_DAILY
+    assert body["max_documents"] == plans.EXPLORE_MAX_DOCUMENTS
+    assert body["story_depths"] == []
+    assert body["note"] == "Just exploring: no videos"
+
+
+def test_explorers_cannot_make_videos(db_session_factory, client):
+    user_id, headers = _user(db_session_factory, focus="explore")
+    refused = _story(client, headers, _document(db_session_factory, user_id), "overview")
+    assert refused.status_code == 403
+    assert "Just exploring" in refused.json()["detail"]
+    assert client.get("/auth/me/usage", headers=headers).json()["used"]["story"] == 0
+
+
+def test_choosing_a_purpose_restores_the_free_plan(db_session_factory, client, monkeypatch):
+    monkeypatch.setattr(settings, "daily_stories_per_user", 3)
+    user_id, headers = _user(db_session_factory, focus="explore")
+    saved = client.put("/auth/me/profile", headers=headers, json={"profession": "student", "focus": "exam"})
+    assert saved.status_code == 200
+    body = client.get("/auth/me/usage", headers=headers).json()
+    assert body["note"] is None and body["limits"]["story"] == 3
+    assert _story(client, headers, _document(db_session_factory, user_id), "overview").status_code == 202
+
+
+@pytest.mark.parametrize("profession", ["student", "professor", "employee"])
+def test_every_profession_can_explore(db_session_factory, client, profession):
+    _user_id, headers = _user(db_session_factory)
+    saved = client.put("/auth/me/profile", headers=headers, json={"profession": profession, "focus": "explore"})
+    assert saved.status_code == 200 and saved.json()["focus"] == "explore"
+
+
+def test_other_users_keep_the_full_free_plan(db_session_factory, client, monkeypatch):
+    monkeypatch.setattr(settings, "daily_questions_per_user", 25)
+    _user_id, headers = _user(db_session_factory, focus="teaching")
+    body = client.get("/auth/me/usage", headers=headers).json()
+    assert body["note"] is None and body["limits"]["question"] == 25 and body["story_depths"]

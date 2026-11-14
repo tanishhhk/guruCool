@@ -47,6 +47,12 @@
   line-height: 1.6;
 }
 
+/* A notice card on the dark screen keeps ink text on its white paper. */
+.screen-start .out-of-credits p {
+  color: var(--ink);
+  text-align: left;
+}
+
 .screen-play {
   margin-top: var(--space-3);
   min-height: 52px;

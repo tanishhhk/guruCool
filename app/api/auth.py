@@ -204,6 +204,7 @@ def my_usage(current_user: User = Depends(get_current_user), db: Session = Depen
     plan = plans.plan_for(current_user)
     return {
         "plan": {"id": plan.id, "label": plan.label},
+        "note": plan.note,
         "limits": dict(plan.daily),
         "used": usage.used_today(db, current_user.id),
         "resets_in_seconds": usage.seconds_until_reset(),
