@@ -39,7 +39,7 @@ services:
       - key: FIREBASE_PHONE_ENABLED
         value: "false"
       - key: CORS_ORIGINS
-        value: '["https://tanishhhk.github.io"]'
+        value: '["https://tanishhhk.github.io", "https://gurucool-01.vercel.app"]'
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "720"
       # Sized for 512 MB and 0.1 CPU: fewer parallel model calls, and child
