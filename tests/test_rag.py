@@ -15,7 +15,7 @@ from app.main import app
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.services import embeddings, ingestion, llm
-from app.services.retrieval import RetrievedChunk
+from app.services.retrieval import RetrievedChunk, is_overview
 from app.utils.pdf_processor import extract_pages
 from app.utils.text_processor import chunk_pages
 from tests.eval.rag_dataset import DOCUMENTS, QUESTIONS, build_pdf
@@ -205,8 +205,9 @@ def answer_with(monkeypatch):
             chat_api, "generate_single_embedding", lambda _q: question_vector or vector(0)
         )
 
-        def fake_generate(question, sources, focus=None, history=None):
+        def fake_generate(question, sources, focus=None, history=None, **_kw):
             seen["sources"] = sources
+            seen["overview"] = _kw.get("overview", False)
             return llm.Answer(answer, "fake", "fake-model")
 
         monkeypatch.setattr(chat_api, "generate_answer", fake_generate)
@@ -326,7 +327,7 @@ def test_each_answer_service_failure_has_its_own_response(
     add(("The fee is 30 euros.", vector(0), {}))
     monkeypatch.setattr(chat_api, "generate_single_embedding", lambda _q: vector(0))
 
-    def failing(_question, _sources, _focus=None, history=None):
+    def failing(_question, _sources, _focus=None, history=None, **_kw):
         raise llm.AnswerServiceError(kind, retry_after)
 
     monkeypatch.setattr(chat_api, "generate_answer", failing)
@@ -340,7 +341,7 @@ def test_unexpected_errors_return_a_generic_server_error(document_with_chunks, m
     add(("The fee is 30 euros.", vector(0), {}))
     monkeypatch.setattr(chat_api, "generate_single_embedding", lambda _q: vector(0))
 
-    def broken(_question, _sources, _focus=None, history=None):
+    def broken(_question, _sources, _focus=None, history=None, **_kw):
         raise KeyError("internal detail that must not reach the client")
 
     monkeypatch.setattr(chat_api, "generate_answer", broken)
@@ -386,7 +387,7 @@ def test_when_no_provider_answers_the_best_passages_are_returned_and_labelled(
     add(("The fee is 30 euros per month.", vector(0), {}), ("Payment is due on the 1st.", vector(1), {}))
     monkeypatch.setattr(chat_api, "generate_single_embedding", lambda _q: vector(0))
 
-    def failing(_question, _sources, _focus=None, history=None):
+    def failing(_question, _sources, _focus=None, history=None, **_kw):
         raise llm.AnswerServiceError(kind)
 
     monkeypatch.setattr(chat_api, "generate_answer", failing)
@@ -417,3 +418,78 @@ def test_answers_report_the_provider_and_model_used(document_with_chunks, answer
     answer_with("The fee is 30 euros [S1].")
     metadata = _ask(headers, document_id).json()["metadata"]
     assert (metadata["provider"], metadata["model"], metadata["fallback_reason"]) == ("fake", "fake-model", None)
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "what is told in the pdf",
+        "What is this PDF about?",
+        "whats this document about",
+        "Summarise this for me",
+        "Give me an overview",
+        "What does the brochure say?",
+        "Tell me about this document",
+        "What are the main points?",
+        "Who is this from?",
+    ],
+)
+def test_questions_about_the_whole_document_are_overviews(question):
+    assert is_overview(question)
+
+
+@pytest.mark.parametrize(
+    "question",
+    [
+        "What is the fee for late payment?",
+        "When does the contract end?",
+        "What is debt syndication?",
+        "How many pages does chapter 2 have?",
+        "What is the notice period for the tenant?",
+    ],
+)
+def test_questions_about_one_detail_are_not_overviews(question):
+    assert not is_overview(question)
+
+
+def test_an_overview_starts_from_the_opening_in_reading_order(document_with_chunks, answer_with):
+    document_id, headers, add = document_with_chunks
+    add(
+        ("Acme Capital is an advisory firm in Mumbai.", vector(9), {}),
+        ("Founded in 2012, Acme serves mid-sized companies.", vector(8), {}),
+        ("Filler about the office.", vector(7), {}),
+        ("Structured finance products.", vector(0), {}),
+        ("Debt resolution services.", vector(0), {}),
+        ("Debt syndication support.", vector(0), {}),
+        ("Contact details.", vector(6), {}),
+        ("Unrelated appendix.", vector(5), {}),
+    )
+    seen = answer_with("Acme Capital is an advisory firm [S1].", question_vector=vector(0))
+
+    body = _ask(headers, document_id, question="What is told in the pdf?").json()
+    pages = [source["page_start"] for source in body["sources"]]
+    assert pages[:2] == [1, 2], "the opening pages come first"
+    assert pages == sorted(pages), "sources follow the document's reading order"
+    assert len(pages) == 6
+    assert {4, 5, 6} <= set(pages), "the best matches are still there"
+    assert seen["overview"] is True
+
+
+def test_a_detail_question_keeps_the_usual_ranking(document_with_chunks, answer_with):
+    document_id, headers, add = document_with_chunks
+    add(("Opening page.", vector(9), {}), ("The fee is 30 euros.", vector(0), {}))
+    seen = answer_with("The fee is 30 euros [S1].")
+
+    body = _ask(headers, document_id, top_k=1, question="What is the fee?").json()
+    assert [source["page_start"] for source in body["sources"]] == [2]
+    assert seen["overview"] is False
+
+
+def test_overview_answers_are_told_who_and_what_first(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(llm, "generate_text", lambda system, _message, **_kw: captured.setdefault("system", system))
+    llm.generate_answer("q", [], overview=True)
+    assert llm.OVERVIEW_GUIDANCE in captured["system"]
+    captured.clear()
+    llm.generate_answer("q", [])
+    assert llm.OVERVIEW_GUIDANCE not in captured["system"]

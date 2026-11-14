@@ -165,15 +165,28 @@ def story_providers() -> list:
     return _story_providers_cache
 
 
-def generate_answer(question: str, sources, focus: str | None = None, history=None) -> Answer:
+OVERVIEW_GUIDANCE = (
+    "This question is about the whole document. Start by saying what kind of document it is "
+    "and who it is from or about, naming the organisation, author or product when the sources "
+    "name them. Then give the main points in the order the document presents them, in up to "
+    "200 words."
+)
+
+
+def generate_answer(
+    question: str, sources, focus: str | None = None, history=None, overview: bool = False
+) -> Answer:
     """Answer from the retrieved passages using the first provider that succeeds.
 
     focus, from the user's onboarding choice, adds one line on what to emphasise.
     history is a list of (question, answer) pairs from earlier in the chat.
+    overview marks a question about the whole document (see retrieval.is_overview).
     """
     system = SYSTEM_INSTRUCTION
     if focus in ANSWER_FOCUS:
-        system = f"{SYSTEM_INSTRUCTION}\n- {ANSWER_FOCUS[focus]}"
+        system = f"{system}\n- {ANSWER_FOCUS[focus]}"
+    if overview:
+        system = f"{system}\n- {OVERVIEW_GUIDANCE}"
     return generate_text(system, build_user_message(question, sources, history))
 
 

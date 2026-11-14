@@ -147,7 +147,11 @@ def ask_question(
     fallback_reason = None
     try:
         generated = generate_answer(
-            question, result.chunks, current_user.focus, history=_recent_turns(db, document.id)
+            question,
+            result.chunks,
+            current_user.focus,
+            history=_recent_turns(db, document.id),
+            overview=result.overview,
         )
     except AnswerServiceError as exc:
         logger.warning("Answer generation failed.", extra={"kind": exc.kind})
