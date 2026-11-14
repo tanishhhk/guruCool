@@ -202,6 +202,8 @@ p {
   border: 1.5px solid var(--rule);
   border-radius: var(--radius-m);
   background: var(--paper);
+  /* Fields are paper, so their text is ink even when the field sits on the dark desk. */
+  color: var(--ink);
   transition: border-color 160ms;
 }
 
