@@ -29,6 +29,32 @@ class RetrievalResult:
     chunks: list[RetrievedChunk]
     searched: int
     skipped: int
+    overview: bool = False
+
+
+# Questions about the whole document ("what is this pdf about", "summarise it")
+# need its opening, where the title and the author or organisation are named,
+# and a wider spread of passages than a question about one detail.
+_DOC = r"(?:pdf|document|doc|file|brochure|report|paper|deck|presentation|handbook|book|chapter)"
+_OVERVIEW = re.compile(
+    rf"""\b(?:
+        summar(?:y|ise|ize|ised|ized|ising|izing)
+      | overview | gist | tl;?dr | in\s+(?:short|brief|a\s+nutshell)
+      | main\s+(?:points?|ideas?|topics?|themes?) | key\s+(?:points|takeaways|ideas)
+      | what(?:'s|s)?\s+(?:is\s+|are\s+)?(?:this|the|it)\s*(?:{_DOC}\s*)?(?:all\s+)?about
+      | what\s+(?:is|are)\s+(?:told|said|written|covered|explained|discussed|described|mentioned)\s+(?:in|by)
+      | what\s+does\s+(?:this|the|it)\s*(?:{_DOC}\s*)?(?:say|tell|cover|contain|explain|describe|talk\s+about)
+      | (?:tell|explain)\s+(?:me\s+)?(?:about\s+)?(?:this|the)\s+{_DOC}
+      | who\s+(?:wrote|made|published|is\s+behind|is\s+this\s+from)
+    )\b""",
+    re.IGNORECASE | re.VERBOSE,
+)
+OVERVIEW_OPENING = 2
+OVERVIEW_TOP_K = 6
+
+
+def is_overview(question: str | None) -> bool:
+    return bool(question) and _OVERVIEW.search(question) is not None
 
 
 def _usable_vector(raw: str):
@@ -92,27 +118,38 @@ def retrieve(
     query = query / np.linalg.norm(query)
     scores = np.vstack(vectors) @ query
 
-    selected, seen = [], set()
     if question:
         order = rank(question, [row.chunk_text for row in usable], scores, rerank)
     else:
         order = np.argsort(-scores, kind="stable")
-    for index in order:
-        row = usable[index]
-        key = _dedupe_key(row.chunk_text)
+
+    overview = is_overview(question)
+    limit = max(top_k, OVERVIEW_TOP_K) if overview else top_k
+    # An overview always starts from the document's opening, then the best matches.
+    candidates = [*range(min(OVERVIEW_OPENING, len(usable))), *order] if overview else order
+
+    picks, seen = [], set()
+    for index in candidates:
+        key = _dedupe_key(usable[index].chunk_text)
         if key in seen:
             continue
         seen.add(key)
-        selected.append(
-            RetrievedChunk(
-                source_id=f"S{len(selected) + 1}",
-                chunk_index=row.chunk_index,
-                text=row.chunk_text,
-                page_start=row.page_start,
-                page_end=row.page_end,
-                score=float(scores[index]),
-            )
-        )
-        if len(selected) == top_k:
+        picks.append(int(index))
+        if len(picks) == limit:
             break
-    return RetrievalResult(selected, searched=len(rows), skipped=skipped)
+    if overview:
+        # In reading order, so the model sees the document as it unfolds.
+        picks.sort(key=lambda index: usable[index].chunk_index)
+
+    selected = [
+        RetrievedChunk(
+            source_id=f"S{position + 1}",
+            chunk_index=usable[index].chunk_index,
+            text=usable[index].chunk_text,
+            page_start=usable[index].page_start,
+            page_end=usable[index].page_end,
+            score=float(scores[index]),
+        )
+        for position, index in enumerate(picks)
+    ]
+    return RetrievalResult(selected, searched=len(rows), skipped=skipped, overview=overview)

@@ -52,7 +52,7 @@ def answers(monkeypatch):
     """Fake model: records the history it was given and answers with a citation."""
     seen = []
 
-    def fake(question, sources, focus=None, history=None):
+    def fake(question, sources, focus=None, history=None, **_kw):
         seen.append(history)
         return Answer(f"Reply to {question} [S1]", "fake", "fake-model")
 
