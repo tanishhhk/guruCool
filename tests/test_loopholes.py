@@ -16,7 +16,21 @@ from app.services.auth import create_access_token, get_password_hash
 from tests.fakes import vector
 
 PDF = b"%PDF-1.7\nsample"
-PUBLIC_ROUTES = {("GET", "/"), ("GET", "/health"), ("GET", "/ready"), ("POST", "/auth/register"), ("POST", "/auth/login")}
+PUBLIC_ROUTES = {
+    ("GET", "/"),
+    ("GET", "/health"),
+    ("GET", "/ready"),
+    ("POST", "/auth/register"),
+    ("POST", "/auth/login"),
+    # Signing up and getting back in: these work before anyone has a token.
+    ("GET", "/auth/providers"),
+    ("POST", "/auth/verify-email"),
+    ("POST", "/auth/resend-code"),
+    ("POST", "/auth/forgot-password"),
+    ("POST", "/auth/reset-password"),
+    ("GET", "/plans"),
+    ("POST", "/auth/firebase"),
+}
 
 
 def _routes():
@@ -323,7 +337,7 @@ def test_a_question_at_the_length_limit_is_accepted(two_users, monkeypatch, db_s
         db.query(Document).filter(Document.id == document_id).update({Document.status: "completed"})
         db.commit()
     monkeypatch.setattr(chat_api, "generate_single_embedding", lambda _q: vector(0))
-    monkeypatch.setattr(chat_api, "generate_answer", lambda q, s, f=None: llm.Answer("Yes [S1].", "fake", "m"))
+    monkeypatch.setattr(chat_api, "generate_answer", lambda q, s, f=None, history=None: llm.Answer("Yes [S1].", "fake", "m"))
     response = TestClient(app).post(
         "/chat/ask", headers=tokens["owner"][1], json={"question": "q" * 4000, "document_id": document_id}
     )

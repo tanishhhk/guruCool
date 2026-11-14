@@ -49,6 +49,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
+def issue_token(user) -> str:
+    """A sign-in token for this user, tied to their current token version."""
+    return create_access_token(
+        {"sub": user.id, "user_id": user.id, "ver": user.token_version or 0},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
+    )
+
+
 def decode_access_token(token: str) -> Optional[dict]:
     try:
         return jwt.decode(

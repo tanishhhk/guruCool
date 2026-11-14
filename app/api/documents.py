@@ -15,13 +15,14 @@ from sqlalchemy.orm import Session
 from app.api.dependencies import get_current_user
 from app.config import settings
 from app.database import get_db
+from app.models.chat_message import ChatMessage
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.models.upload_idempotency import UploadIdempotency
 from app.models.user import User
 from app.models.video_job import VideoJob
 from app.schemas.document import DocumentPage, DocumentResponse
-from app.services import ingestion, usage, video_jobs
+from app.services import ingestion, plans, usage, video_jobs
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -282,13 +283,14 @@ async def upload_document(
             return existing_document
 
         stored = db.query(Document).filter(Document.user_id == current_user.id).count()
-        if stored >= settings.max_documents_per_user:
+        allowed = plans.plan_for(current_user).max_documents
+        if stored >= allowed:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Your library holds {settings.max_documents_per_user} documents. "
+                detail=f"Your library holds {allowed} documents. "
                 "Delete one to upload another.",
             )
-        usage.consume(db, current_user.id, "upload")
+        usage.consume(db, current_user, "upload")
 
         document = Document(
             id=document_id,
@@ -418,6 +420,7 @@ def delete_document(
     file_path = document.file_path
     story_ids = [row[0] for row in db.query(VideoJob.id).filter(VideoJob.document_id == document_id)]
     db.query(VideoJob).filter(VideoJob.document_id == document_id).delete(synchronize_session=False)
+    db.query(ChatMessage).filter(ChatMessage.document_id == document_id).delete(synchronize_session=False)
     db.query(DocumentChunk).filter(
         DocumentChunk.document_id == document_id
     ).delete(synchronize_session=False)

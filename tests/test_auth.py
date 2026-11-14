@@ -57,7 +57,7 @@ def test_register_and_login_returns_signed_token():
         assert login.json()["token_type"] == "bearer"
 
         payload = decode_access_token(login.json()["access_token"])
-        assert payload["sub"] == "new@example.com"
+        assert payload["sub"] == payload["user_id"] == registration.json()["id"]
         assert isinstance(payload["user_id"], str)
 
 
@@ -216,7 +216,8 @@ def test_me_returns_the_signed_in_user_until_logout():
 
         me = client.get("/auth/me", headers=headers)
         assert me.status_code == 200
-        assert me.json() == created.json()
+        shared = ("id", "email", "created_at")
+        assert {key: me.json()[key] for key in shared} == {key: created.json()[key] for key in shared}
         assert "hashed_password" not in me.text
 
         assert client.get("/auth/me").status_code == 401

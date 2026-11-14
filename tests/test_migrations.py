@@ -270,3 +270,21 @@ def test_ingestion_migration_reconciles_legacy_document_states(database_url):
         assert _schema_differences(engine) == []
     finally:
         engine.dispose()
+
+
+def test_existing_users_are_verified_after_migration(database_url):
+    config = _alembic(database_url)
+    command.upgrade(config, "0008")
+    engine = create_engine(database_url)
+    with engine.begin() as connection:
+        connection.execute(
+            text("INSERT INTO users (id, email, hashed_password) VALUES ('old', 'old@example.com', 'h')")
+        )
+    command.upgrade(config, "0009")
+    with engine.connect() as connection:
+        verified, version = connection.execute(
+            text("SELECT email_verified, token_version FROM users WHERE id = 'old'")
+        ).one()
+    engine.dispose()
+    assert bool(verified) is True
+    assert version == 0

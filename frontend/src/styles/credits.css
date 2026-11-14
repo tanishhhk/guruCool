@@ -1,0 +1,157 @@
+/* Credits on the shelf, the lock when they run out, and the plans page. */
+.credits {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+}
+
+.credits-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--paper);
+}
+
+.credits-plans {
+  color: var(--ink-soft);
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--ink-3);
+}
+
+.credits-plans:hover {
+  color: var(--paper);
+  text-decoration-color: var(--highlight);
+}
+
+.credits-list {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.credits-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.credits-track {
+  display: block;
+  height: 4px;
+  margin-top: 3px;
+  border-radius: 2px;
+  background: var(--ink-2);
+  overflow: hidden;
+}
+
+.credits-track span {
+  display: block;
+  height: 100%;
+  background: var(--highlight);
+  transform-origin: left;
+  transition: transform 400ms var(--ease-out);
+}
+
+.credits-list li.is-empty .credits-label span:last-child {
+  color: #f0a59e;
+}
+
+.credits-reset {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.out-of-credits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-m);
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 10px 30px -12px rgba(14, 34, 41, 0.35);
+}
+
+.out-of-credits p {
+  flex: 1;
+  min-width: 14rem;
+}
+
+.out-of-credits svg {
+  color: var(--marigold-text);
+}
+
+.screen-start .out-of-credits {
+  margin-top: var(--space-3);
+  text-align: left;
+}
+
+.plans {
+  gap: var(--space-5);
+}
+
+.plan-grid {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.plan {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-m);
+}
+
+.plan.is-mine {
+  border-color: var(--ink);
+}
+
+.plan h2 {
+  font-size: var(--step-2);
+}
+
+.plan-price {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--pencil);
+}
+
+.plan.is-mine .plan-price {
+  color: var(--marigold-text);
+}
+
+.plan-features {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.plan-features li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.plan-features svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--green-tick);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credits-track span {
+    transition: none;
+  }
+}

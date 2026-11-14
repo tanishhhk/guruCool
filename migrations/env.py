@@ -2,7 +2,17 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 
 from app.database import Base
-from app.models import document, document_chunk, revoked_token, upload_idempotency, usage, user, video_job  # noqa: F401
+from app.models import (  # noqa: F401
+    chat_message,
+    document,
+    document_chunk,
+    email_code,
+    revoked_token,
+    upload_idempotency,
+    usage,
+    user,
+    video_job,
+)
 
 config = context.config
 target_metadata = Base.metadata

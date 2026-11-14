@@ -194,3 +194,18 @@ def test_provider_names_are_validated_and_deduplicated():
     assert _settings(llm_providers=" Groq, groq ,gemini").llm_provider_order == ["groq", "gemini"]
     with pytest.raises(ValidationError):
         _settings(llm_providers="groq,chatgpt-free")
+
+
+def test_think_blocks_are_removed():
+    from app.services.llm_providers import strip_reasoning
+
+    assert strip_reasoning("<think>plan the answer</think>\n\nThe answer. [S1]") == "The answer. [S1]"
+    assert strip_reasoning("<think>never finished") == ""
+    assert strip_reasoning("No reasoning here.") == "No reasoning here."
+
+
+def test_a_reply_that_only_thinks_counts_as_empty():
+    provider = _provider(lambda request: httpx.Response(200, json=_completion("<think>hmm</think>")))
+    with pytest.raises(ProviderFailure) as failure:
+        provider.generate("system", "user")
+    assert failure.value.kind == "empty"

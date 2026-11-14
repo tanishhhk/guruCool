@@ -29,10 +29,10 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    email = payload.get("sub")
+    subject = payload.get("sub")
     user_id = payload.get("user_id")
     token_id = payload.get("jti")
-    if not all(isinstance(value, str) and value for value in (email, user_id, token_id)):
+    if not all(isinstance(value, str) and value for value in (subject, user_id, token_id)):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication credentials.",
@@ -46,8 +46,10 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = db.query(User).filter(User.email == email).first()
-    if user is None or user.id != user_id:
+    # Tokens name the user by id; older ones carry the email as the subject.
+    user = db.get(User, user_id) if "\x00" not in user_id else None
+    version = payload.get("ver", 0)
+    if user is None or subject not in (user.id, user.email) or version != (user.token_version or 0):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication credentials.",
