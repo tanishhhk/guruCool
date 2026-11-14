@@ -372,91 +372,16 @@
 
 /* The page side */
 .page-area {
+  --area-top: clamp(var(--space-5), 4vw, var(--space-7));
+  --area-x: clamp(var(--space-4), 5vw, var(--space-8));
   min-width: 0;
-  padding: clamp(var(--space-5), 4vw, var(--space-7)) clamp(var(--space-4), 5vw, var(--space-8)) var(--space-8);
+  padding: var(--area-top) var(--area-x) var(--space-8);
 }
 
-.home,
 .doc,
 .settings {
   max-width: 820px;
   margin: 0 auto;
-}
-
-.home {
-  display: grid;
-  gap: var(--space-6);
-}
-
-.home-head h1 {
-  font-size: var(--step-4);
-  text-wrap: balance;
-}
-
-.home-lede {
-  margin-top: var(--space-3);
-  max-width: 58ch;
-  color: var(--pencil);
-  font-size: var(--step-1);
-  line-height: 1.6;
-}
-
-.home-recent h2 {
-  font-size: var(--step-2);
-  margin-bottom: var(--space-3);
-}
-
-.home-recent ul {
-  list-style: none;
-}
-
-.recent-row {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-1) var(--space-4);
-  align-items: center;
-  padding: var(--space-4) 0;
-  border-top: 1px solid var(--rule);
-  text-align: left;
-}
-
-.recent-name {
-  font-family: var(--font-display);
-  font-size: var(--step-1);
-  font-weight: 600;
-  justify-self: start;
-}
-
-.recent-row:hover .recent-name {
-  background: linear-gradient(var(--highlight-soft), var(--highlight-soft)) no-repeat 0 85% / 100% 40%;
-}
-
-.recent-line {
-  grid-column: 1;
-  display: flex;
-  gap: var(--space-2);
-  align-items: center;
-  color: var(--pencil);
-  min-width: 0;
-}
-
-.recent-line span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recent-go {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  color: var(--pencil);
-  transition: transform 200ms var(--ease-out), color 200ms;
-}
-
-.recent-row:hover .recent-go {
-  color: var(--ink);
-  transform: translateX(4px);
 }
 
 /* One document */

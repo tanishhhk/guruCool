@@ -60,7 +60,9 @@ function slides(usage) {
     {
       title: "Everything stays on your shelf",
       text: limits
-        ? `Your documents, chats and videos wait on the shelf. Each day you get ${limits.question} questions, ${limits.story} videos and ${limits.upload} uploads, refilled at midnight UTC.`
+        ? limits.story > 0
+          ? `Your documents, chats and videos wait on the shelf. Each day you get ${limits.question} questions, ${limits.story} videos and ${limits.upload} uploads, refilled at midnight UTC.`
+          : `Your documents and chats wait on the shelf. Each day you get ${limits.question} questions and ${limits.upload} uploads, refilled at midnight UTC.`
         : "Your documents, chats and videos wait on the shelf, ready when you come back.",
     },
   ];

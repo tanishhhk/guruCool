@@ -101,11 +101,11 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
       {drawer && <button type="button" className="shelf-scrim" aria-label="Close your documents" onClick={() => setDrawer(false)} />}
 
       <main className="page-area">
-        {view === "home" && <Home user={user} items={items} usage={usage} onPlans={showPlans} onReady={(document) => { onUsed(); open(document); }} onOpen={open} />}
+        {view === "home" && <Home user={user} items={items} usage={usage} onPlans={showPlans} onReady={(document) => { onUsed(); open(document); }} onOpen={open} onUser={onUser} />}
         {view === "plans" && <Plans usage={usage} />}
         {view === "settings" && <Profile user={user} usage={usage} onUser={onUser} onSignOut={onSignOut} />}
         {view === "document" && current && (
-          <DocumentView key={current.id} document={current} user={user} usage={usage} onUsed={onUsed} onDeleted={removed} onPlans={showPlans} />
+          <DocumentView key={current.id} document={current} user={user} usage={usage} onUsed={onUsed} onDeleted={removed} onPlans={showPlans} onProfile={() => setView("settings")} />
         )}
       </main>
 

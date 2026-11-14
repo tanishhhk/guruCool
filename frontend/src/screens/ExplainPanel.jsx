@@ -4,7 +4,7 @@ import { Check, Download, Lock, MessageSquareText, Play, RotateCcw } from "lucid
 import { api, wait } from "../api";
 import { OutOfCredits } from "../components/Credits";
 import { Mark } from "../components/Logo";
-import { FOCUS } from "../lenses";
+import { FOCUS, videosLocked } from "../lenses";
 import { parseUtc } from "../lib/shelf";
 import { STEPS, stepOf, creep } from "../lib/videoSteps";
 import { LENGTHS, VOICES, voiceName } from "../lib/voices";
@@ -60,8 +60,9 @@ function Making({ job }) {
   );
 }
 
-export default function ExplainPanel({ document, user, usage, onUsed, onAsk, onPlans }) {
+export default function ExplainPanel({ document, user, usage, onUsed, onAsk, onPlans, onProfile }) {
   const focus = user.focus;
+  const locked = videosLocked(usage);
   const [style, setStyle] = useState(user.story_style || (focus ? FOCUS[focus].strictness : "exam"));
   const [depth, setDepth] = useState(user.story_depth && user.story_depth !== "deep" ? user.story_depth : "overview");
   const [voice, setVoice] = useState(user.story_voice || "aria");
@@ -201,9 +202,23 @@ export default function ExplainPanel({ document, user, usage, onUsed, onAsk, onP
         ) : (
           <div className="screen-start">
             <Mark size={44} />
-            <h2>{hasStory ? "Make a new video of this document" : "See this document explained"}</h2>
-            <p>A narrated video that walks you through what matters, told from the document itself.</p>
-            {outOfVideos ? (
+            <h2>{locked ? "Videos come with a purpose" : hasStory ? "Make a new video of this document" : "See this document explained"}</h2>
+            <p>
+              {locked
+                ? "Narrated video explanations are part of exam prep, research, teaching and the work choices."
+                : "A narrated video that walks you through what matters, told from the document itself."}
+            </p>
+            {locked ? (
+              <div className="out-of-credits" role="status">
+                <Lock size={18} strokeWidth={1.75} aria-hidden="true" />
+                <p>You are just exploring, so videos are off. Choose what you use guruCool for to turn them on.</p>
+                {onProfile && (
+                  <button type="button" className="button button-quiet" onClick={onProfile}>
+                    Choose a purpose
+                  </button>
+                )}
+              </div>
+            ) : outOfVideos ? (
               <OutOfCredits kind="story" usage={usage} onPlans={onPlans} note="Your earlier videos still play." />
             ) : tooDear ? (
               <p className="screen-locked">This length needs {cost} credits and {left} {left === 1 ? "is" : "are"} left today. Choose a shorter one.</p>
@@ -212,11 +227,11 @@ export default function ExplainPanel({ document, user, usage, onUsed, onAsk, onP
                 <Play size={20} strokeWidth={2} aria-hidden="true" /> Make my video
               </button>
             )}
-            <button type="button" className="screen-choose" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>
+            {!locked && <button type="button" className="screen-choose" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>
               {choosing
                 ? "Hide the options"
                 : `${LENGTHS.find(([id]) => id === depth)[1]}, ${style === "strict" ? "facts only" : "explained simply"}, read by ${voiceName(voice)}. Change`}
-            </button>
+            </button>}
           </div>
         )}
       </div>

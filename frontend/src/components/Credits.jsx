@@ -17,8 +17,9 @@ export function CreditsMeter({ usage, onPlans }) {
         <span>{usage.plan?.label ?? "Free"} plan, today</span>
         <button type="button" className="credits-plans" onClick={onPlans}>See plans</button>
       </div>
+      {usage.note && <p className="credits-note">{usage.note}</p>}
       <ul className="credits-list">
-        {KINDS.map(([kind, label]) => {
+        {KINDS.filter(([kind]) => usage.limits[kind] > 0).map(([kind, label]) => {
           const left = creditsLeft(usage, kind);
           const share = usage.limits[kind] ? left / usage.limits[kind] : 0;
           return (

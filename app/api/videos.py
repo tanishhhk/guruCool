@@ -75,6 +75,11 @@ def generate_story(
         )
 
     plan = plans.plan_for(current_user)
+    if not plan.story_depths:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Video explanations are not part of Just exploring. Choose what you use guruCool for in your profile to turn them on.",
+        )
     if body.depth not in plan.story_depths:
         needed = plans.first_plan_with(body.depth)
         raise HTTPException(

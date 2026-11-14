@@ -4,10 +4,11 @@ The focus is saved on the user from onboarding. It adds one line of guidance
 to answers and stories; grounding and citation rules are unchanged.
 """
 
+# Every profession can also choose "explore": a free hand with smaller limits and no videos.
 PROFESSIONS = {
-    "student": ("exam", "research"),
-    "professor": ("research", "teaching"),
-    "employee": ("legal", "finance", "engineering", "general"),
+    "student": ("exam", "research", "explore"),
+    "professor": ("research", "teaching", "explore"),
+    "employee": ("legal", "finance", "engineering", "general", "explore"),
 }
 
 ANSWER_FOCUS = {
@@ -18,6 +19,7 @@ ANSWER_FOCUS = {
     "finance": "The reader works in finance or business: emphasise figures, trends, comparisons and risks.",
     "engineering": "The reader works in engineering or IT: emphasise requirements, steps, settings and constraints.",
     "general": "Answer plainly, as a short summary a busy colleague can act on.",
+    "explore": "The reader is exploring out of curiosity: answer plainly and briefly, and point out what is most interesting.",
 }
 
 STORY_FOCUS = {

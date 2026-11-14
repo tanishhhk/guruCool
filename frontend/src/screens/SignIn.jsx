@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { AlertCircle, Check, Eye, EyeOff, Smartphone } from "lucide-react";
 
 import { api, session } from "../api";
@@ -6,8 +6,10 @@ import { ResetStep, VerifyStep } from "../components/AccountSteps";
 import Guru from "../components/Guru";
 import { Logo } from "../components/Logo";
 import PhoneSignIn from "../components/PhoneSignIn";
+import Speech from "../components/Speech";
 import { googleIdToken } from "../lib/firebase";
 import { friendlyAuthError } from "../lib/firebaseErrors";
+import { useNarrow } from "../lib/viewport";
 
 // Google's "G", drawn from its four brand colours, as their sign-in guidelines ask.
 function GoogleMark() {
@@ -23,18 +25,6 @@ function GoogleMark() {
 
 const MIN_PASSWORD = 12;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const reduceMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-// True on the stacked phone layout, where the guru is framed close.
-const narrow = window.matchMedia("(max-width: 820px)");
-const useNarrow = () =>
-  useSyncExternalStore(
-    (notify) => {
-      narrow.addEventListener("change", notify);
-      return () => narrow.removeEventListener("change", notify);
-    },
-    () => narrow.matches,
-  );
 
 // What the guru says. Decorative: every fact here is also in the form's own text.
 function line({ stage, creating, focus, email, password, show, busy, troubled, failure }) {
@@ -64,23 +54,6 @@ function line({ stage, creating, focus, email, password, show, busy, troubled, f
 
 // Letters plus a number or symbol: a quick sign of a stronger password.
 const mixed = (value) => /[a-z]/i.test(value) && /[^a-z]/i.test(value);
-
-// Types the guru's line out a few letters at a time. Keyed by the text, so
-// each new line starts from its first letter.
-function Speech({ text }) {
-  const [count, setCount] = useState(() => (reduceMotion() ? text.length : 0));
-  useEffect(() => {
-    if (count >= text.length) return undefined;
-    const timer = setTimeout(() => setCount((value) => value + 2), 18);
-    return () => clearTimeout(timer);
-  }, [count, text.length]);
-  return (
-    <p className="gc-speech" aria-hidden="true">
-      {text.slice(0, count)}
-      <span className="gc-speech-rest">{text.slice(count)}</span>
-    </p>
-  );
-}
 
 export default function SignIn({ onSignedIn }) {
   const [mode, setMode] = useState("signin");

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Clapperboard, MessageSquareText, MoreHorizontal, Trash2 } from "lucide-react";
 
 import { api } from "../api";
-import { focusPhrase } from "../lenses";
+import { EXPLORE, focusPhrase, videosLocked } from "../lenses";
 import ChatPanel from "./ChatPanel";
 import ExplainPanel from "./ExplainPanel";
 
@@ -78,8 +78,9 @@ function DeleteMenu({ document, onDeleted }) {
 }
 
 // One document: its video explanation first, its chat second.
-export default function DocumentView({ document, user, usage, onUsed, onDeleted, onPlans }) {
-  const [tab, setTab] = useState("explain");
+export default function DocumentView({ document, user, usage, onUsed, onDeleted, onPlans, onProfile }) {
+  // Explorers have no videos, so their documents open on the conversation.
+  const [tab, setTab] = useState(() => (videosLocked(usage) ? "chat" : "explain"));
 
   return (
     <div className="doc">
@@ -89,7 +90,7 @@ export default function DocumentView({ document, user, usage, onUsed, onDeleted,
             <h1 className="doc-title">{document.filename.replace(/\.pdf$/i, "")}</h1>
             <p className="doc-meta">
               <span className="folio">{document.page_count} {document.page_count === 1 ? "page" : "pages"}</span>
-              {user.focus && <span>Read for {focusPhrase(user.focus)}</span>}
+              {user.focus && <span>{user.focus === EXPLORE ? "Just exploring" : `Read for ${focusPhrase(user.focus)}`}</span>}
             </p>
           </div>
           <DeleteMenu document={document} onDeleted={onDeleted} />
@@ -118,7 +119,7 @@ export default function DocumentView({ document, user, usage, onUsed, onDeleted,
 
       <section className="doc-body" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
         {tab === "explain" ? (
-          <ExplainPanel document={document} user={user} usage={usage} onUsed={onUsed} onPlans={onPlans} onAsk={() => setTab("chat")} />
+          <ExplainPanel document={document} user={user} usage={usage} onUsed={onUsed} onPlans={onPlans} onProfile={onProfile} onAsk={() => setTab("chat")} />
         ) : (
           <ChatPanel document={document} focus={user.focus} usage={usage} onUsed={onUsed} onPlans={onPlans} />
         )}

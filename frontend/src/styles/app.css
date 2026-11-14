@@ -14,114 +14,6 @@
   max-width: 44ch;
 }
 
-/* Onboarding */
-.onboarding {
-  min-height: 100vh;
-  background: var(--ink-2);
-  color: var(--ink);
-  padding: var(--space-5) var(--space-5) var(--space-8);
-}
-
-.onboarding-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 880px;
-  margin: 0 auto var(--space-7);
-}
-
-.onboarding-top .logo-word {
-  color: var(--paper);
-}
-
-.onboarding-skip {
-  justify-self: start;
-}
-
-.onboarding-page {
-  max-width: 760px;
-  margin: 0 auto;
-  background: var(--paper);
-  border-radius: 4px;
-  box-shadow: var(--shadow-page);
-  padding: clamp(var(--space-6), 5vw, var(--space-8));
-  display: grid;
-  gap: var(--space-5);
-}
-
-.onboarding-page h1 {
-  font-size: var(--step-3);
-}
-
-.onboarding-page {
-  position: relative;
-}
-
-.onboarding-step {
-  position: absolute;
-  top: var(--space-5);
-  right: var(--space-6);
-  font-size: var(--step-1);
-}
-
-.onboarding-lede {
-  color: var(--pencil);
-  max-width: 56ch;
-  margin-top: calc(var(--space-3) * -1);
-}
-
-.onboarding-back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--pencil);
-  width: fit-content;
-  min-height: 36px;
-}
-
-.choices {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.choices-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.choice {
-  display: grid;
-  align-content: start;
-  gap: var(--space-1);
-  text-align: left;
-  padding: var(--space-4) var(--space-5);
-  border: 1.5px solid var(--rule);
-  border-radius: var(--radius-m);
-  transition: border-color 160ms, transform 160ms var(--ease-out);
-}
-
-.choice:hover {
-  border-color: var(--ink);
-  transform: translateY(-1px);
-}
-
-.choice-label {
-  font-family: var(--font-display);
-  font-size: var(--step-2);
-  font-weight: 600;
-}
-
-.choice:hover .choice-label span:not(.hl) {
-  background: linear-gradient(var(--highlight-soft), var(--highlight-soft)) no-repeat 0 85% / 100% 35%;
-}
-
-.choice-line {
-  color: var(--pencil);
-}
-
-.choice.is-selected {
-  border-color: var(--ink);
-}
-
 /* Upload */
 .upload {
   display: grid;
@@ -556,7 +448,6 @@
 }
 
 @media (max-width: 760px) {
-  .choices-grid,
   .segmented {
     grid-template-columns: 1fr;
   }

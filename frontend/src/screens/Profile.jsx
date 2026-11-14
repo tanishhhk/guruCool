@@ -364,7 +364,11 @@ export default function Profile({ user, usage, onUser, onSignOut }) {
             <section className="profile-section" aria-labelledby="today-heading">
               <h2 id="today-heading">Today</h2>
               <p className="profile-note">
-                {usage.used.question} of {usage.limits.question} questions, {usage.used.story} of {usage.limits.story} videos and {usage.used.upload} of {usage.limits.upload} uploads used. Your shelf holds {usage.documents} of {usage.max_documents} documents.
+                {usage.limits.story > 0
+                  ? `${usage.used.question} of ${usage.limits.question} questions, ${usage.used.story} of ${usage.limits.story} videos and ${usage.used.upload} of ${usage.limits.upload} uploads used.`
+                  : `${usage.used.question} of ${usage.limits.question} questions and ${usage.used.upload} of ${usage.limits.upload} uploads used.`}{" "}
+                Your shelf holds {usage.documents} of {usage.max_documents} documents.
+                {usage.note && ` ${usage.note}. Choose another use above for videos and higher limits.`}
               </p>
             </section>
           )}

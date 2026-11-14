@@ -3,13 +3,20 @@
 Free takes its numbers from settings (DAILY_*_PER_USER, MAX_DOCUMENTS_PER_USER), so a
 deployment can tune them. A plan is set on users.plan.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from app.config import settings
 
 # Video credits a story costs, by length.
 STORY_COST = {"overview": 1, "detailed": 2, "deep": 3}
 DEPTH_NAMES = {"overview": "Short", "detailed": "Detailed", "deep": "Deep dive"}
+
+# "Just exploring" on Free: smaller daily limits and no videos. Choosing a purpose
+# (exam prep, research, teaching or a work field) lifts both.
+EXPLORE_FOCUS = "explore"
+EXPLORE_DAILY = {"upload": 2, "question": 10, "story": 0}
+EXPLORE_MAX_DOCUMENTS = 5
+EXPLORE_NOTE = "Just exploring: no videos"
 
 
 @dataclass(frozen=True)
@@ -20,6 +27,7 @@ class Plan:
     max_documents: int
     story_depths: tuple
     price_note: str
+    note: str | None = None
 
 
 def all_plans() -> dict[str, Plan]:
@@ -48,10 +56,22 @@ def all_plans() -> dict[str, Plan]:
 
 
 def plan_for(user) -> Plan:
-    """The user's plan. A bare user id (older callers) means Free."""
+    """The user's plan. A bare user id (older callers) means Free.
+
+    Free users who chose "Just exploring" get the explorer limits and no videos.
+    """
     plans = all_plans()
     plan_id = getattr(user, "plan", None) or "free"
-    return plans.get(plan_id, plans["free"])
+    plan = plans.get(plan_id, plans["free"])
+    if plan.id == "free" and getattr(user, "focus", None) == EXPLORE_FOCUS:
+        return replace(
+            plan,
+            daily=dict(EXPLORE_DAILY),
+            max_documents=EXPLORE_MAX_DOCUMENTS,
+            story_depths=(),
+            note=EXPLORE_NOTE,
+        )
+    return plan
 
 
 def first_plan_with(depth: str) -> Plan:

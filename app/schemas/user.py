@@ -100,6 +100,7 @@ class UsageResponse(BaseModel):
     documents: int
     story_costs: dict[str, int]
     story_depths: list[str]
+    note: str | None = None
 
 
 class Token(BaseModel):
