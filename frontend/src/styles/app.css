@@ -1,4 +1,4 @@
-/* Boot and server wake-up */
+/* Server unreachable: the only full-page message left at start-up. */
 .boot {
   min-height: 100vh;
   display: grid;
@@ -8,34 +8,10 @@
   padding: var(--space-6);
   color: var(--ink-soft);
   text-align: center;
+}
+
+.boot p {
   max-width: 44ch;
-  margin: 0 auto;
-}
-
-.boot-mark {
-  animation: breathe 1.8s ease-in-out infinite;
-}
-
-/* The highlighter stroke draws across the page, again and again, while the app loads. */
-.boot-mark path:nth-of-type(3) {
-  animation: draw 1.8s var(--ease-out) infinite;
-}
-
-@keyframes breathe {
-  50% {
-    transform: translateY(-4px) rotate(-3deg);
-  }
-}
-
-@keyframes draw {
-  from {
-    clip-path: inset(0 100% 0 0);
-  }
-
-  60%,
-  to {
-    clip-path: inset(0 0 0 0);
-  }
 }
 
 /* Onboarding */
@@ -570,8 +546,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .boot-mark,
-  .boot-mark path,
   .upload-steps li.is-now::before {
     animation: none;
   }

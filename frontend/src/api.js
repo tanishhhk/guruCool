@@ -68,26 +68,6 @@ export async function api(path, { method = "GET", body, form, headers = {}, raw 
 
 export const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// The free host sleeps when idle; the first request can take a minute.
-export async function waitForServer(onWaiting, signal) {
-  const deadline = Date.now() + 3 * 60 * 1000;
-  let warned = false;
-  while (Date.now() < deadline && !signal?.aborted) {
-    try {
-      const response = await fetch(`${API_URL}/health`, { signal });
-      if (response.ok) return true;
-    } catch {
-      // Not up yet.
-    }
-    if (!warned) {
-      warned = true;
-      onWaiting?.();
-    }
-    await wait(3000);
-  }
-  return false;
-}
-
 // Upload with progress: fetch cannot report upload progress, XMLHttpRequest can.
 export function uploadPdf(file, onProgress) {
   const form = new FormData();

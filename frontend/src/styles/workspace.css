@@ -211,6 +211,52 @@
   width: 60%;
 }
 
+/* Placeholders for the whole workspace while a returning user's account loads. */
+.shelf-new-skeleton,
+.page-skeleton span {
+  display: block;
+  background: linear-gradient(90deg, var(--page-shade) 0%, var(--rule) 50%, var(--page-shade) 100%) 0 0 / 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.shelf-new-skeleton {
+  height: 44px;
+  border-radius: 999px;
+  background-image: linear-gradient(90deg, var(--ink-2) 0%, var(--ink-3) 50%, var(--ink-2) 100%);
+}
+
+.page-skeleton {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.page-skeleton span {
+  height: 14px;
+  width: 80%;
+  border-radius: 7px;
+}
+
+.page-skeleton .page-skeleton-title {
+  height: 36px;
+  width: 55%;
+  border-radius: 10px;
+  margin-bottom: var(--space-3);
+}
+
+.page-skeleton .page-skeleton-card {
+  height: 220px;
+  width: 100%;
+  border-radius: 16px;
+  margin-top: var(--space-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelf-new-skeleton,
+  .page-skeleton span {
+    animation: none;
+  }
+}
+
 @keyframes shimmer {
   to {
     background-position: -200% 0;
