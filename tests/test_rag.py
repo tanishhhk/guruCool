@@ -487,7 +487,12 @@ def test_a_detail_question_keeps_the_usual_ranking(document_with_chunks, answer_
 
 def test_overview_answers_are_told_who_and_what_first(monkeypatch):
     captured = {}
-    monkeypatch.setattr(llm, "generate_text", lambda system, _message, **_kw: captured.setdefault("system", system))
+
+    def fake(system, _message, **_kw):
+        captured.setdefault("system", system)
+        return llm.Answer(llm.NOT_FOUND_ANSWER, "fake", "fake-model")
+
+    monkeypatch.setattr(llm, "generate_text", fake)
     llm.generate_answer("q", [], overview=True)
     assert llm.OVERVIEW_GUIDANCE in captured["system"]
     captured.clear()

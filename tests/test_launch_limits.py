@@ -142,7 +142,11 @@ def test_every_focus_has_answer_and_story_guidance():
 
 def test_the_focus_adds_guidance_without_dropping_the_grounding_rules(monkeypatch):
     seen = {}
-    monkeypatch.setattr(llm, "generate_text", lambda system, user: seen.setdefault("system", system) and None)
+    def fake(system, _user, **_kw):
+        seen.setdefault("system", system)
+        return llm.Answer(llm.NOT_FOUND_ANSWER, "fake", "fake-model")
+
+    monkeypatch.setattr(llm, "generate_text", fake)
     llm.generate_answer("q", [], "legal")
     assert seen["system"].startswith(llm.SYSTEM_INSTRUCTION)
     assert "obligations" in seen["system"]
