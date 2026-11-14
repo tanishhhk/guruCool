@@ -211,6 +211,7 @@ def ask_question(
             "top_k_used": len(result.chunks),
             "provider": generated.provider if generated else None,
             "model": generated.model if generated else None,
+            "revised": bool(generated and getattr(generated, "revised", False)),
             "fallback_reason": fallback_reason,
         },
     }

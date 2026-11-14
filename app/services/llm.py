@@ -3,9 +3,10 @@ import random
 import re
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from app.config import settings
+from app.services import answer_check
 from app.services.lenses import ANSWER_FOCUS
 from app.services.llm_providers import FAILURE_PRIORITY, ProviderFailure, build_providers
 
@@ -24,6 +25,11 @@ Grounding rules:
   understand what a follow-up question refers to. It is not a source of facts.
 - If the sources do not contain the answer, reply with exactly:
   {NOT_FOUND_ANSWER}
+
+Before you write:
+- Read the sources and work out what they actually say about the question.
+- Check every point you plan to make against the sources. Drop any point, name
+  or figure the sources do not state, and copy figures exactly as written.
 
 How to answer:
 - Explain in your own simple words. Never copy a sentence from a source; quote
@@ -129,6 +135,16 @@ class Answer:
     text: str
     provider: str
     model: str
+    revised: bool = False
+
+
+REVISION_REQUEST = """A checker found problems in your draft answer below. Rewrite the whole answer
+so it follows every rule, fixing these problems:
+{problems}
+
+<draft>
+{draft}
+</draft>"""
 
 
 _ATTEMPTS_PER_PROVIDER = 2
@@ -187,7 +203,33 @@ def generate_answer(
         system = f"{system}\n- {ANSWER_FOCUS[focus]}"
     if overview:
         system = f"{system}\n- {OVERVIEW_GUIDANCE}"
-    return generate_text(system, build_user_message(question, sources, history))
+    message = build_user_message(question, sources, history)
+    draft = generate_text(system, message)
+    return _checked(draft, system, message, question, sources)
+
+
+def _checked(draft: Answer, system: str, message: str, question: str, sources) -> Answer:
+    """Check the draft against its sources; ask for one rewrite only if a check fails.
+
+    A clean draft is returned as it is, so most answers cost one model call. The
+    rewrite is kept only when it has fewer problems than the draft.
+    """
+    problems = answer_check.review(draft.text, sources, question, NOT_FOUND_ANSWER)
+    if not problems:
+        return draft
+    logger.info(
+        "Answer draft failed checks; asking for a rewrite.",
+        extra={"checks": [problem.kind for problem in problems]},
+    )
+    request = REVISION_REQUEST.format(problems=answer_check.describe(problems), draft=draft.text)
+    try:
+        rewrite = generate_text(system, f"{message}\n\n{request}")
+    except AnswerServiceError:
+        return draft
+    remaining = answer_check.review(rewrite.text, sources, question, NOT_FOUND_ANSWER)
+    if len(remaining) < len(problems):
+        return replace(rewrite, revised=True)
+    return draft
 
 
 def generate_text(system_instruction: str, user_message: str, long_running: bool = False) -> Answer:
