@@ -24,7 +24,7 @@ export default function Home({ user, items, usage, onReady, onOpen, onPlans }) {
       <header className="home-head">
         <h1>{name ? `${greeting()}, ${name}.` : `${greeting()}.`}</h1>
         <p className="home-lede">
-          Drop in a PDF. guruKool explains it as a short narrated video, then answers your questions and shows the page each answer comes from.
+          Drop in a PDF. guruCool explains it as a short narrated video, then answers your questions and shows the page each answer comes from.
         </p>
       </header>
 

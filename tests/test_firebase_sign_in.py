@@ -13,7 +13,7 @@ from app.models.user import User
 from app.services import firebase_tokens
 from app.services.auth import get_password_hash
 
-PROJECT = "gurukool-test"
+PROJECT = "gurucool-test"
 KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 OTHER_KEY = rsa.generate_private_key(public_exponent=65537, key_size=2048)
 
@@ -62,7 +62,7 @@ def test_google_creates_account(client):
     assert account["display_name"] == "Asha Rao"
     assert account["sign_in_methods"] == ["google"]
     assert account["has_password"] is False
-    # The same Google account signs in to the same guruKool account.
+    # The same Google account signs in to the same guruCool account.
     assert _me(client, _sign_in(client, _google(sub="google-user-1")))["id"] == account["id"]
 
 

@@ -47,7 +47,7 @@ def docs_urls(enabled: bool) -> dict:
 
 
 app = FastAPI(
-    title="guruKool",
+    title="guruCool",
     description="AI-powered document analysis with RAG.",
     version="1.2.0",
     lifespan=lifespan,
@@ -82,7 +82,7 @@ app.include_router(plans.router, prefix="/plans", tags=["Plans"])
 @app.get("/")
 def root():
     return {
-        "message": "guruKool API",
+        "message": "guruCool API",
         "status": "running",
         "version": app.version,
     }

@@ -99,7 +99,7 @@ class Settings(BaseSettings):
     email_provider: Literal["none", "console", "brevo"] = "none"
     brevo_api_key: str = ""
     email_from_address: str = Field(default="", max_length=200)
-    email_from_name: str = Field(default="guruKool", max_length=100)
+    email_from_name: str = Field(default="guruCool", max_length=100)
 
     # Google and phone sign-in through Firebase Authentication. Google is on when
     # the project id and web API key are set; phone also needs FIREBASE_PHONE_ENABLED

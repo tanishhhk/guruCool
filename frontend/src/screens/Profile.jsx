@@ -204,7 +204,7 @@ function Reading({ user, onUser }) {
 
   return (
     <section className="profile-section" aria-labelledby="reading-heading">
-      <h2 id="reading-heading">How guruKool reads for you</h2>
+      <h2 id="reading-heading">How guruCool reads for you</h2>
       <p className="profile-note">This shapes suggested questions and what answers and videos emphasise. The facts never change.</p>
       <form className="settings-form" onSubmit={save}>
         <div className="field">

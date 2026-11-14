@@ -47,11 +47,11 @@ function slides(usage) {
   return [
     {
       title: "Bring any PDF",
-      text: "A report, a chapter, a contract, your notes. guruKool reads every page, usually in under a minute.",
+      text: "A report, a chapter, a contract, your notes. guruCool reads every page, usually in under a minute.",
     },
     {
       title: "Watch it explained",
-      text: "The main event. guruKool turns your document into a short narrated video that tells you what matters in plain words. You choose how long it is and how it is told.",
+      text: "The main event. guruCool turns your document into a short narrated video that tells you what matters in plain words. You choose how long it is and how it is told.",
     },
     {
       title: "Ask anything, see the page",

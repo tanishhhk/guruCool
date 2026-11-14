@@ -14,12 +14,12 @@ logger = logging.getLogger(__name__)
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 
 _SUBJECTS = {
-    "verify": "Your guruKool code",
-    "reset": "Reset your guruKool password",
+    "verify": "Your guruCool code",
+    "reset": "Reset your guruCool password",
 }
 _LINES = {
-    "verify": "Here is your code to finish setting up guruKool.",
-    "reset": "Here is your code to choose a new guruKool password.",
+    "verify": "Here is your code to finish setting up guruCool.",
+    "reset": "Here is your code to choose a new guruCool password.",
 }
 
 
@@ -32,7 +32,7 @@ def _bodies(code: str, purpose: str) -> tuple[str, str]:
         '<p style="font-size:32px;font-weight:700;letter-spacing:8px;margin:24px 0">'
         f'<span style="background:#ffc94d;padding:4px 12px;border-radius:6px">{code}</span></p>'
         "<p>It works for 15 minutes. If you did not ask for it, you can ignore this email.</p>"
-        '<p style="color:#55666c">guruKool</p></div>'
+        '<p style="color:#55666c">guruCool</p></div>'
     )
     return text, html
 
