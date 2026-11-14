@@ -30,6 +30,7 @@ STORY_FOCUS = {
     "finance": "Tell it like a confident investor update: the numbers, the trend and the risks.",
     "engineering": "Tell it like a walkthrough by a senior engineer: how it works and what to watch out for.",
     "general": "Tell it like a friendly colleague summarising the document over coffee.",
+    "explore": "Tell it like a curious friend sharing the most interesting parts.",
 }
 
 
