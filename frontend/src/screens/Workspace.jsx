@@ -70,7 +70,7 @@ export default function Workspace({ user, initialDocument, onUser, onSignOut }) 
         <button type="button" className="icon-button on-ink" aria-label="Open your documents" onClick={() => setDrawer(true)}>
           <Menu size={20} strokeWidth={1.75} aria-hidden="true" />
         </button>
-        <button type="button" className="mobile-home" onClick={goHome} aria-label="guruKool home">
+        <button type="button" className="mobile-home" onClick={goHome} aria-label="guruCool home">
           <Logo size={26} />
         </button>
       </header>

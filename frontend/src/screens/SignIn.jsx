@@ -142,7 +142,7 @@ export default function SignIn({ onSignedIn }) {
     api("/auth/providers").then(setProviders).catch(() => {});
   }, []);
 
-  // A Firebase ID token (from Google or a phone) becomes a guruKool sign-in.
+  // A Firebase ID token (from Google or a phone) becomes a guruCool sign-in.
   const withFirebase = async (idToken) => {
     const { access_token: token } = await api("/auth/firebase", { method: "POST", body: { id_token: idToken } });
     signIn(token);

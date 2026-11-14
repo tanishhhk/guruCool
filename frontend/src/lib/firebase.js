@@ -17,9 +17,9 @@ export async function googleIdToken(config) {
 // containerId names an element for the invisible reCAPTCHA Firebase uses against abuse.
 export async function startPhoneSignIn(config, phone, containerId) {
   const { auth, authModule } = await load(config);
-  window.gurukoolRecaptcha?.clear?.();
+  window.gurucoolRecaptcha?.clear?.();
   const verifier = new authModule.RecaptchaVerifier(auth, containerId, { size: "invisible" });
-  window.gurukoolRecaptcha = verifier;
+  window.gurucoolRecaptcha = verifier;
   const confirmation = await authModule.signInWithPhoneNumber(auth, phone, verifier);
   return {
     async confirm(code) {

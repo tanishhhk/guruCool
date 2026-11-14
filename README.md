@@ -1,10 +1,10 @@
-# guruKool
+# guruCool
 
 **Upload a PDF. Ask it anything. Watch it explained.**
 
-guruKool turns dense documents into something you can talk to. Drop in a report, a handbook or a set of notes, and get plain-language answers that point to the exact page they came from, or a short narrated video that walks you through the whole thing.
+guruCool turns dense documents into something you can talk to. Drop in a report, a handbook or a set of notes, and get plain-language answers that point to the exact page they came from, or a short narrated video that walks you through the whole thing.
 
-**Try it:** [tanishhhk.github.io/guruKool](https://tanishhhk.github.io/guruKool/)
+**Try it:** [tanishhhk.github.io/guruCool](https://tanishhhk.github.io/guruCool/)
 
 ## What you can do
 
@@ -58,8 +58,8 @@ Video stories follow the same path: the model writes a scene-by-scene script fro
 Python 3.11 and Node 20 or newer are recommended.
 
 ```bash
-git clone https://github.com/tanishhhk/guruKool.git
-cd guruKool
+git clone https://github.com/tanishhhk/guruCool.git
+cd guruCool
 
 python -m venv .venv
 source .venv/bin/activate        # Windows: .venv\Scripts\activate
@@ -111,9 +111,9 @@ The image runs as a non-root user and ships with the embedding model.
 
 ## Deploy
 
-guruKool runs entirely on free plans.
+guruCool runs entirely on free plans.
 
-- **API:** [Deploy to Render](https://render.com/deploy?repo=https://github.com/tanishhhk/guruKool) from the Blueprint in `render.yaml`. Paste your provider keys when asked; Render generates `SECRET_KEY` and connects the database. Pushes to `main` redeploy.
+- **API:** [Deploy to Render](https://render.com/deploy?repo=https://github.com/tanishhhk/guruCool) from the Blueprint in `render.yaml`. Paste your provider keys when asked; Render generates `SECRET_KEY` and connects the database. Pushes to `main` redeploy.
 - **Web app:** run `python scripts/go_live.py https://<service>.onrender.com`. It checks the API, points the web app at it and publishes to GitHub Pages. Pushes to `main` republish.
 
 **Email codes.** Set `EMAIL_PROVIDER=brevo`, `BREVO_API_KEY` and `EMAIL_FROM_ADDRESS` to verify new accounts and reset passwords with 6-digit codes sent through a free [Brevo](https://www.brevo.com) account.
@@ -195,4 +195,4 @@ The suite covers every feature plus:
 
 CI runs all of this on SQLite and PostgreSQL, audits dependencies, scans history for secrets with Gitleaks, and starts the full Docker stack for a smoke test. A nightly run repeats the property tests with 2,000 examples each.
 
-See [SECURITY.md](SECURITY.md) for how guruKool handles security.
+See [SECURITY.md](SECURITY.md) for how guruCool handles security.

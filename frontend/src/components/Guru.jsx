@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-// The guruKool guru: floats on his halo and reacts to the sign-in form.
+// The guruCool guru: floats on his halo and reacts to the sign-in form.
 // mood: "watch" | "shy" (eyes covered) | "peek" | "oops" | "bliss"
 // look: { x, y } in -1..1 to aim his eyes; null follows the pointer.
 // lit: how many of the four halo rings are lit (0 to 4).
@@ -100,7 +100,7 @@ export default function Guru({ mood = "watch", look = null, lit = 4, close = fal
           <path className="gc-robe" d="M206 380c-26 52-22 108 26 136l30-22c-32-22-34-62-24-94Z" {...SILHOUETTE} />
           <path className="gc-robe" d="M394 380c26 52 22 108-26 136l-30-22c32-22 34-62 24-94Z" {...SILHOUETTE} />
 
-          {/* The book in his lap is the guruKool page. */}
+          {/* The book in his lap is the guruCool page. */}
           <g className="gc-book">
             <path d="M262 466h58l18 18v62a3 3 0 0 1-3 3h-73a3 3 0 0 1-3-3v-77a3 3 0 0 1 3-3Z" fill="#fff" {...LINE} />
             <path d="M320 466v18h18" fill="none" {...LINE} />

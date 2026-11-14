@@ -119,7 +119,7 @@ export default function Shelf({ user, items, currentId, usage, onHome, onOpen, o
 
   return (
     <nav className="shelf" aria-label="Your documents">
-      <button type="button" className="shelf-logo" onClick={onHome} aria-label="guruKool home">
+      <button type="button" className="shelf-logo" onClick={onHome} aria-label="guruCool home">
         <Logo size={28} />
       </button>
 

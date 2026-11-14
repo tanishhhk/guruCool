@@ -1,5 +1,5 @@
 // The welcome tour shows once per person on this browser; the account menu can reopen it.
-const key = (userId) => `gurukool_tour_seen:${userId}`;
+const key = (userId) => `gurucool_tour_seen:${userId}`;
 
 export function tourSeen(userId) {
   try {

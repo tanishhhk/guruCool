@@ -1,4 +1,4 @@
-"""Match a Google or phone sign-in (a Firebase ID token) to a guruKool account."""
+"""Match a Google or phone sign-in (a Firebase ID token) to a guruCool account."""
 from fastapi import HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -37,7 +37,7 @@ def _save(db: Session, user: User) -> User:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="That sign-in already belongs to another guruKool account.",
+            detail="That sign-in already belongs to another guruCool account.",
         ) from None
     db.refresh(user)
     return user

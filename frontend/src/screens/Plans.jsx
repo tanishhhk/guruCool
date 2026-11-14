@@ -20,7 +20,7 @@ export default function Plans({ usage }) {
     <div className="settings plans">
       <h1>Plans</h1>
       <p className="profile-note">
-        guruKool is free while it grows. Each day you get a fresh set of credits. Plans with more questions, more and longer videos and a bigger shelf are on the way.
+        guruCool is free while it grows. Each day you get a fresh set of credits. Plans with more questions, more and longer videos and a bigger shelf are on the way.
       </p>
       {error && <p className="field-error" role="alert">{error}</p>}
       {plans && (
