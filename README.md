@@ -25,7 +25,7 @@ A short welcome tour shows new users around on their first visit.
 1. **Upload.** The PDF is stored and queued. A background worker extracts the text page by page in an isolated process with time and memory limits.
 2. **Chunk.** Text is split along sentence, heading and table-row boundaries, and every chunk remembers its page range.
 3. **Embed.** Each chunk becomes a vector with `all-MiniLM-L6-v2`, running on ONNX Runtime.
-4. **Retrieve.** A question is embedded and matched against the document's chunks, then the best matches are re-ranked.
+4. **Retrieve.** A question is matched against the document's chunks by embedding similarity fused with BM25 keyword scores, then the best matches are re-ranked.
 5. **Answer.** The top passages go to the language model as numbered sources, kept separate from the instructions. The model is told to answer only from those sources, to treat them as untrusted data, and to cite them.
 6. **Verify.** Any citation that points to a passage that was not retrieved is removed before the answer is returned.
 
@@ -37,7 +37,7 @@ Video stories follow the same path: the model writes a scene-by-scene script fro
 - **Never a dead end.** Answers come from whichever of several free model providers responds first. If none can answer, the best matching passages are returned, clearly labelled.
 - **Private by default.** Every document, chat and story belongs to one account, and tests check that no other user can reach them.
 - **Hardened inputs.** Upload idempotency keys, size and page limits, request limits per route, token revocation, and prompt-injection resistant prompts.
-- **Measured retrieval.** On a labelled set of 37 questions, the page-aware chunker reaches 0.939 hit@1, 0.970 hit@3 and 0.985 MRR, and CI fails if quality drops.
+- **Measured retrieval.** On a labelled set of 60 questions, retrieval as it runs in the app (hybrid search with re-ranking) reaches 0.95 hit@1, 1.0 hit@3 and 0.983 MRR, and the nightly check fails if quality drops.
 
 ## Stack
 
